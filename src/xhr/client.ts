@@ -1,42 +1,134 @@
-export enum ReadyStates {
-  Unsent = 0,
-  Opened = 1,
-  HeadersReceived = 2,
-  Loading = 3,
-  Done = 4
+import { encodeQueryObj, QueryObject } from "../uri/encode"
+import { parseHeaders } from "./headers"
+import { Response } from "./response"
+
+export interface RequestOptions {
+  query?: QueryObject
+  params?: { [key: string]: any }
+  headers?: { [key: string]: string }
+}
+
+type RequestBody = { [key: string]: any } | FormData
+type HeaderObject = { [key: string]: string }
+
+interface PromiseResolve<T> {
+  (value?: any): any
+  (value?: T): T
+}
+
+interface PromiseReject {
+  (reason?: any): any
 }
 
 export class Client {
-  private headers = {
+  public static Timeout: number = 0
+
+  public static DefaultHeaders = {
     Accept: "application/json",
     "Cache-Control": "no-cache",
     "X-Requested-With": "XMLHttpRequest"
   }
 
   private xhr: XMLHttpRequest
+  private method: string
+  private url: string
+  private headers: HeaderObject
+  private body: RequestBody
+  private query: string
 
-  constructor() {
-    this.xhr = new XMLHttpRequest()
+  private queryAdded: boolean = false
+
+  constructor(method: string, url: string, contentType = "application/json") {
+    Object.assign(this, {
+      method,
+      url,
+      headers: Object.assign({}, Client.DefaultHeaders),
+      xhr: new XMLHttpRequest()
+    })
   }
 
-  setHeaders(headers: object): this {
-    return Object.assign(this, { headers })
+  /**
+   * Sets an object of headers that will be written to the XHR.
+   * { [header: string]: value: string }
+   */
+  setHeaders(headers: HeaderObject): this {
+    Object.assign(this.headers, headers)
+    return this
+  }
+  addQueryString(query: string): this {
+    if (this.queryAdded) {
+      throw new Error("Cannot add query string twice.")
+    }
+    this.url += "?"
+    this.url += query
+    this.queryAdded = true
+    return this
+  }
+  addQueryObject(query: QueryObject): this {
+    return this.addQueryString(encodeQueryObj(query))
   }
 
-  on(event: string, callback: EventListenerOrEventListenerObject): void {
-    this.xhr.addEventListener(event, callback)
+  private applyHeaders(): this {
+    for (const header of Object.keys(this.headers)) {
+      this.xhr.setRequestHeader(header, this.headers[header])
+    }
+    return this
+  }
+  private handleReadyStateChange(resolve: PromiseResolve<Response>) {
+    if (this.xhr.readyState !== XMLHttpRequest.DONE) {
+      return
+    }
+    const response = Object.assign(new Response(), {
+      responseHeaders: "getAllResponseHeaders" in this.xhr ? parseHeaders(this.xhr.getAllResponseHeaders()) : {},
+      responseData: this.xhr.responseType == "text" ? this.xhr.responseText : this.xhr.response,
+      xhr: this.xhr
+    })
+    resolve(response)
+  }
+  private execute(resolve: PromiseResolve<Response>, reject: PromiseReject) {
+    this.xhr.open(this.method, this.url, Client.Async)
+    this.applyHeaders()
+    this.xhr.onreadystatechange = this.handleReadyStateChange.bind(this, resolve)
+    this.xhr.ontimeout = reject
+    this.xhr.onerror = reject
   }
 
-  static Get(url: string, query = {}) {
-    //
+  do(): Promise<Response> {
+    return new Promise<Response>(this.execute.bind(this))
   }
-  static Post(url: string, options = {}) {
-    //
+
+  static Make(method: string, url: string, options: RequestOptions = {}): Client {
+    const client = new Client(method, url)
+
+    if (options.query) {
+      client.addQueryObject(options.query)
+    }
+    if (options.params) {
+      //
+    }
+    if (options.headers) {
+      client.setHeaders(options.headers)
+    }
+    return client
   }
-  static Put(url: string, options = {}) {
-    //
+
+  static Get(url: string, query?: QueryObject) {
+    return Client.Make("GET", url, { query }).do()
   }
-  static Delete(url: string, query = {}) {
-    //
+  static Post(url: string, options: RequestOptions = {}) {
+    return Client.Make("POST", url, options).do()
+  }
+  static Put(url: string, options: RequestOptions = {}) {
+    return Client.Make("PUT", url, options).do()
+  }
+  static Patch(url: string, options: RequestOptions = {}) {
+    return Client.Make("PATCH", url, options).do()
+  }
+  static Delete(url: string, query?: QueryObject) {
+    return Client.Make("DELETE", url, { query }).do()
+  }
+
+  static get Async() {
+    return true
   }
 }

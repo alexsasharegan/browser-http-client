@@ -12,7 +12,7 @@ const Env = {
 
 const conf = {
   entry: {
-    app: "./src"
+    index: "./src"
   },
   output: {
     path: path.resolve(__dirname, "../dist"),
