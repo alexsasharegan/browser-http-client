@@ -4,6 +4,8 @@ A browser-specific, lightweight XHR client.
 
 ## Purpose
 
-Modern XHR clients these days are trending towards isomorphic design. This makes for a comfortable API across client & server applications, but it also means shipping more code to our browser clients.
+Modern web applications require extensive use of ajax calls, but for basic CRUD operations, the calls are fairly simple. Feature rich clients like `$.ajax`, [axios](https://github.com/axios/axios) and [superagent](https://github.com/visionmedia/superagent) offer very nice APIs, but many of their features go unused. It's also very common for ajax clients to support both browser and server in the same package. All this means shipping unnecessary code to our end users.
 
-This library aims to provide a basic XHR client for the browser only. It's designed to occupy a small footprint in your browser bundle, while still providing a convenient abstraction for handling ajax requests.
+This library is modeled after familiar client APIs, but in a no-frills manner. It's a basic XHR client for the browser only, while still providing a convenient abstraction for the 80% use-case of ajax requests. It's written in TypeScript to help provide a stable package as well as a better development experience when consuming its APIs. Many of the hacks to support older browsers have been dropped in favor of an >=ES5 compatible codebase—a compatibility check is performed when the lib is loaded, and an Error will be logged if required browser APIs are not present.
+
+Much of the code is adapted from the [axios client](https://github.com/axios/axios). While it isn't a drop-in replacement for axios, the APIs and data structures are very similar. Should you build on top of this package and decide to upgrade to axios in the future, their similarities will make that refactor relatively easy. All of the HTTP status codes were adapted from the Golang standard library.
