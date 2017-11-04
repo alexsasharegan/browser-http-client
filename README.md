@@ -1,6 +1,8 @@
 # browser-http-client
 
-A browser-specific, lightweight XHR client. 7.1K (gzipped: 2.7K)
+A browser-specific, lightweight XHR client.
+
+**Size:** `7.1K (gzipped: 2.7K)`
 
 ## Purpose
 
