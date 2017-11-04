@@ -47,7 +47,7 @@ const esm = (opts = {}) =>
     {},
     {
       minify: false,
-      ext: "esm",
+      ext: "esm" + (opts.minify ? ".min" : ""),
       output: {
         libraryTarget: "commonjs2"
       }
@@ -60,7 +60,7 @@ const browser = (opts = {}) =>
     {},
     {
       minify: false,
-      ext: "browser",
+      ext: "browser" + (opts.minify ? ".min" : ""),
       output: {
         library: "Http",
         libraryTarget: "window",
@@ -70,19 +70,4 @@ const browser = (opts = {}) =>
     opts
   )
 
-module.exports = [
-  conf(esm()),
-  conf(
-    esm({
-      minify: true,
-      ext: "esm.min"
-    })
-  ),
-  conf(browser()),
-  conf(
-    browser({
-      minify: true,
-      ext: "browser.min"
-    })
-  )
-]
+module.exports = [conf(esm()), conf(esm({ minify: true })), conf(browser()), conf(browser({ minify: true }))]
