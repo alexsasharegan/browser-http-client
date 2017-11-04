@@ -2,12 +2,16 @@
   "name": "browser-http-client",
   "version": "1.0.0",
   "description": "Browser-specific, lightweight XHR client.",
-  "main": "src/index.js",
+  "main": "dist/http.browser.min.js",
+  "module": "dist/http.esm.min.js",
+  "jsnext:main": "dist/http.esm.min.js",
   "scripts": {
     "dev": "npm run build:dev",
     "build": "npm run build:prod",
-    "build:dev": "node build/clean && cross-env NODE_ENV=development webpack --config build/webpack.config.js --progress --hide-modules",
-    "build:prod": "node build/clean && cross-env NODE_ENV=production webpack --config build/webpack.config.js --progress --hide-modules",
+    "build:dev":
+      "node build/clean && cross-env NODE_ENV=development webpack --config build/webpack.config.js --progress --hide-modules",
+    "build:prod":
+      "node build/clean && cross-env NODE_ENV=production webpack --config build/webpack.config.js --progress --hide-modules",
     "size": "cat dist/http.esm.min.js | wc -c",
     "size:gzip": "gzip -c dist/http.esm.min.js | wc -c",
     "release": "npm run release:version && npm run release:publish",
