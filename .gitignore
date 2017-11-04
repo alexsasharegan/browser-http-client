@@ -28,5 +28,6 @@ build/Release
 node_modules/
 .vscode/
 .idea/
+tmp/
 
 .DS_Store
