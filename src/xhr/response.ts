@@ -1,5 +1,7 @@
 export class Response {
-  public responseHeaders: object
-  public responseData: any
+  public data: any
+  public status: number
+  public statusText:string
+  public headers: object
   public xhr: XMLHttpRequest
 }

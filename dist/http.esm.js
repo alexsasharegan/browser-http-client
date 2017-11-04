@@ -66,153 +66,12 @@ module.exports =
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
-Object.defineProperty(exports, "__esModule", { value: true });
-var client_1 = __webpack_require__(1);
-exports.Client = client_1.Client;
-var status_1 = __webpack_require__(5);
-exports.Status = status_1.Status;
-var compatChecks = {
-    XMLHttpRequest: "XMLHttpRequest" in window,
-    Promise: "Promise" in window,
-    "Array.isArray": typeof Array.isArray == "function",
-    "Object.assign": typeof Object.assign == "function",
-    "Object.keys": typeof Object.keys == "function"
-};
-for (var key in compatChecks) {
-    if (!compatChecks.hasOwnProperty(key) || compatChecks[key]) {
-        continue;
-    }
-    console.error(new Error("Required " + key + " is not available in the browser"));
-}
-var Http = { Client: client_1.Client, Status: status_1.Status };
-exports.default = Http;
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var encode_1 = __webpack_require__(2);
-var headers_1 = __webpack_require__(3);
-var response_1 = __webpack_require__(4);
-var Client = (function () {
-    function Client(method, url, contentType) {
-        if (contentType === void 0) { contentType = "application/json"; }
-        this.queryAdded = false;
-        Object.assign(this, {
-            method: method,
-            url: url,
-            headers: Object.assign({}, Client.DefaultHeaders),
-            xhr: new XMLHttpRequest()
-        });
-    }
-    Client.prototype.setHeaders = function (headers) {
-        Object.assign(this.headers, headers);
-        return this;
-    };
-    Client.prototype.addQueryString = function (query) {
-        if (this.queryAdded) {
-            throw new Error("Cannot add query string twice.");
-        }
-        this.url += "?";
-        this.url += query;
-        this.queryAdded = true;
-        return this;
-    };
-    Client.prototype.addQueryObject = function (query) {
-        return this.addQueryString(encode_1.encodeQueryObj(query));
-    };
-    Client.prototype.applyHeaders = function () {
-        for (var _i = 0, _a = Object.keys(this.headers); _i < _a.length; _i++) {
-            var header = _a[_i];
-            this.xhr.setRequestHeader(header, this.headers[header]);
-        }
-        return this;
-    };
-    Client.prototype.handleReadyStateChange = function (resolve) {
-        if (this.xhr.readyState !== XMLHttpRequest.DONE) {
-            return;
-        }
-        var response = Object.assign(new response_1.Response(), {
-            responseHeaders: "getAllResponseHeaders" in this.xhr ? headers_1.parseHeaders(this.xhr.getAllResponseHeaders()) : {},
-            responseData: this.xhr.responseType == "text" ? this.xhr.responseText : this.xhr.response,
-            xhr: this.xhr
-        });
-        resolve(response);
-    };
-    Client.prototype.execute = function (resolve, reject) {
-        this.xhr.open(this.method, this.url, Client.Async);
-        this.applyHeaders();
-        this.xhr.onreadystatechange = this.handleReadyStateChange.bind(this, resolve);
-        this.xhr.ontimeout = reject;
-        this.xhr.onerror = reject;
-    };
-    Client.prototype.do = function () {
-        return new Promise(this.execute.bind(this));
-    };
-    Client.make = function (method, url, options) {
-        if (options === void 0) { options = {}; }
-        var client = new Client(method, url);
-        if (options.query) {
-            client.addQueryObject(options.query);
-        }
-        if (options.params) {
-        }
-        if (options.headers) {
-            client.setHeaders(options.headers);
-        }
-        return client;
-    };
-    Client.get = function (url, query) {
-        return Client.make("GET", url, { query: query }).do();
-    };
-    Client.post = function (url, options) {
-        if (options === void 0) { options = {}; }
-        return Client.make("POST", url, options).do();
-    };
-    Client.put = function (url, options) {
-        if (options === void 0) { options = {}; }
-        return Client.make("PUT", url, options).do();
-    };
-    Client.patch = function (url, options) {
-        if (options === void 0) { options = {}; }
-        return Client.make("PATCH", url, options).do();
-    };
-    Client.delete = function (url, query) {
-        return Client.make("DELETE", url, { query: query }).do();
-    };
-    Object.defineProperty(Client, "Async", {
-        get: function () {
-            return true;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Client.Timeout = 0;
-    Client.DefaultHeaders = {
-        Accept: "application/json",
-        "Cache-Control": "no-cache",
-        "X-Requested-With": "XMLHttpRequest"
-    };
-    return Client;
-}());
-exports.Client = Client;
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
+// CONCATENATED MODULE: ./src/uri/encode.ts
 function encodeKeyValue(k, v) {
     k = encodeURIComponent(k);
     if (v === void 0) {
@@ -231,16 +90,8 @@ function encodeQueryObj(query) {
     }
     return q;
 }
-exports.encodeQueryObj = encodeQueryObj;
 
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
+// CONCATENATED MODULE: ./src/xhr/headers.ts
 var ignoreDupeMap = {
     age: true,
     authorization: true,
@@ -290,31 +141,163 @@ function parseHeaders(headers) {
     }
     return parsed;
 }
-exports.parseHeaders = parseHeaders;
 
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
+// CONCATENATED MODULE: ./src/xhr/response.ts
 var Response = (function () {
     function Response() {
     }
     return Response;
 }());
-exports.Response = Response;
 
 
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
+// CONCATENATED MODULE: ./src/xhr/contentType.ts
+var ContentType = {
+    json: "application/json",
+    text: "text/plain",
+    html: "text/html",
+    form: "application/x-www-form-urlencoded",
+    multipart: "multipart/form-data",
+    stream: "application/octet-stream"
+};
 
-"use strict";
+// CONCATENATED MODULE: ./src/xhr/client.ts
 
-Object.defineProperty(exports, "__esModule", { value: true });
+
+
+
+var client_Client = (function () {
+    function Client(method, url) {
+        this.data = null;
+        this.responseType = Client.ResponseType;
+        this.timeout = Client.Timeout;
+        this.queryAdded = false;
+        Object.assign(this, {
+            method: method,
+            url: url,
+            headers: Object.assign({}, Client.DefaultHeaders),
+            xhr: new XMLHttpRequest()
+        });
+    }
+    Client.prototype.setHeaders = function (headers) {
+        Object.assign(this.headers, headers);
+    };
+    Client.prototype.addQueryString = function (query) {
+        if (this.queryAdded) {
+            throw new Error("Cannot add query string twice.");
+        }
+        this.url += "?";
+        this.url += query;
+        this.queryAdded = true;
+    };
+    Client.prototype.addQueryObject = function (query) {
+        this.addQueryString(encodeQueryObj(query));
+    };
+    Client.prototype.setData = function (data) {
+        if (!data) {
+            return;
+        }
+        if (data instanceof FormData || data instanceof Document) {
+            this.data = data;
+        }
+        this.data = JSON.stringify(data);
+    };
+    Client.prototype.applyHeaders = function () {
+        for (var _i = 0, _a = Object.keys(this.headers); _i < _a.length; _i++) {
+            var header = _a[_i];
+            this.xhr.setRequestHeader(header, this.headers[header]);
+        }
+    };
+    Client.prototype.handleReadyStateChange = function (resolve, reject) {
+        if (this.xhr.readyState !== XMLHttpRequest.DONE) {
+            return;
+        }
+        var response = new Response();
+        response.data = this.xhr.responseType == "text" ? this.xhr.responseText : this.xhr.response;
+        response.status = this.xhr.status;
+        response.statusText = this.xhr.statusText;
+        response.headers = "getAllResponseHeaders" in this.xhr ? parseHeaders(this.xhr.getAllResponseHeaders()) : {};
+        response.xhr = this.xhr;
+        if (this.xhr.status < 200 || this.xhr.status >= 400) {
+            reject(response);
+        }
+        resolve(response);
+    };
+    Client.prototype.execute = function (resolve, reject) {
+        this.xhr.open(this.method, this.url, Client.Async);
+        this.xhr.responseType = this.responseType;
+        this.xhr.timeout = this.timeout;
+        this.applyHeaders();
+        this.xhr.onreadystatechange = this.handleReadyStateChange.bind(this, resolve);
+        this.xhr.ontimeout = reject;
+        this.xhr.onerror = reject;
+        this.xhr.send(this.data);
+    };
+    Client.prototype.do = function () {
+        return new Promise(this.execute.bind(this));
+    };
+    Client.make = function (method, url, options) {
+        if (options === void 0) { options = {}; }
+        var client = new Client(method, url);
+        if (options.query) {
+            client.addQueryObject(options.query);
+        }
+        if (method != "GET" && options.data) {
+            client.setData(options.data);
+        }
+        if (options.responseType) {
+            client.responseType = options.responseType;
+        }
+        if (options.headers) {
+            client.setHeaders(options.headers);
+        }
+        if (options.timeout) {
+            client.timeout = options.timeout;
+        }
+        return client;
+    };
+    Client.get = function (url, query) {
+        return Client.make("GET", url, { query: query }).do();
+    };
+    Client.post = function (url, data, options) {
+        if (options === void 0) { options = {}; }
+        options.data = data;
+        return Client.make("POST", url, options).do();
+    };
+    Client.put = function (url, data, options) {
+        if (options === void 0) { options = {}; }
+        options.data = data;
+        return Client.make("PUT", url, options).do();
+    };
+    Client.patch = function (url, data, options) {
+        if (options === void 0) { options = {}; }
+        options.data = data;
+        return Client.make("PATCH", url, options).do();
+    };
+    Client.delete = function (url, query) {
+        return Client.make("DELETE", url, { query: query }).do();
+    };
+    Client.setResponseType = function (type) {
+        Client.ResponseType = type;
+    };
+    Object.defineProperty(Client, "Async", {
+        get: function () {
+            return true;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Client.Timeout = 0;
+    Client.ResponseType = "json";
+    Client.DefaultHeaders = {
+        Accept: ContentType.json,
+        "Cache-Control": "no-cache",
+        "X-Requested-With": "XMLHttpRequest"
+    };
+    return Client;
+}());
+
+
+// CONCATENATED MODULE: ./src/xhr/status.ts
 var Status;
 (function (Status) {
     Status[Status["Continue"] = 100] = "Continue";
@@ -377,7 +360,31 @@ var Status;
     Status[Status["LoopDetected"] = 508] = "LoopDetected";
     Status[Status["NotExtended"] = 510] = "NotExtended";
     Status[Status["NetworkAuthenticationRequired"] = 511] = "NetworkAuthenticationRequired";
-})(Status = exports.Status || (exports.Status = {}));
+})(Status || (Status = {}));
+
+// CONCATENATED MODULE: ./src/index.ts
+/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "Client", function() { return client_Client; });
+/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "Status", function() { return Status; });
+/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "ContentType", function() { return ContentType; });
+
+
+
+var compatChecks = {
+    XMLHttpRequest: "XMLHttpRequest" in window,
+    Promise: "Promise" in window,
+    "Array.isArray": typeof Array.isArray == "function",
+    "Object.assign": typeof Object.assign == "function",
+    "Object.keys": typeof Object.keys == "function"
+};
+for (var key in compatChecks) {
+    if (!compatChecks.hasOwnProperty(key) || compatChecks[key]) {
+        continue;
+    }
+    console.error(new Error("Required " + key + " is not available in the browser"));
+}
+
+var Http = { Client: client_Client, Status: Status, ContentType: ContentType };
+/* harmony default export */ var src = __webpack_exports__["default"] = (Http);
 
 
 /***/ })

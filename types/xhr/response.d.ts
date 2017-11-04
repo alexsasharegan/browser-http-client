@@ -1,5 +1,7 @@
 export declare class Response {
-    responseHeaders: object;
-    responseData: any;
+    data: any;
+    status: number;
+    statusText: string;
+    headers: object;
     xhr: XMLHttpRequest;
 }
