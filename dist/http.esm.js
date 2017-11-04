@@ -227,7 +227,7 @@ var client_Client = (function () {
         this.xhr.responseType = this.responseType;
         this.xhr.timeout = this.timeout;
         this.applyHeaders();
-        this.xhr.onreadystatechange = this.handleReadyStateChange.bind(this, resolve);
+        this.xhr.onreadystatechange = this.handleReadyStateChange.bind(this, resolve, reject);
         this.xhr.ontimeout = reject;
         this.xhr.onerror = reject;
         this.xhr.send(this.data);
