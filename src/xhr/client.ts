@@ -97,7 +97,7 @@ export class Client {
     return new Promise<Response>(this.execute.bind(this))
   }
 
-  static Make(method: string, url: string, options: RequestOptions = {}): Client {
+  static make(method: string, url: string, options: RequestOptions = {}): Client {
     const client = new Client(method, url)
 
     if (options.query) {
@@ -112,20 +112,20 @@ export class Client {
     return client
   }
 
-  static Get(url: string, query?: QueryObject) {
-    return Client.Make("GET", url, { query }).do()
+  static get(url: string, query?: QueryObject) {
+    return Client.make("GET", url, { query }).do()
   }
-  static Post(url: string, options: RequestOptions = {}) {
-    return Client.Make("POST", url, options).do()
+  static post(url: string, options: RequestOptions = {}) {
+    return Client.make("POST", url, options).do()
   }
-  static Put(url: string, options: RequestOptions = {}) {
-    return Client.Make("PUT", url, options).do()
+  static put(url: string, options: RequestOptions = {}) {
+    return Client.make("PUT", url, options).do()
   }
-  static Patch(url: string, options: RequestOptions = {}) {
-    return Client.Make("PATCH", url, options).do()
+  static patch(url: string, options: RequestOptions = {}) {
+    return Client.make("PATCH", url, options).do()
   }
-  static Delete(url: string, query?: QueryObject) {
-    return Client.Make("DELETE", url, { query }).do()
+  static delete(url: string, query?: QueryObject) {
+    return Client.make("DELETE", url, { query }).do()
   }
 
   static get Async() {

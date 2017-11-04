@@ -1,5 +1,5 @@
 import { Client } from "./xhr/client"
-import { Code, Text } from "./xhr/status"
+import { Status } from "./xhr/status"
 
 type Dictionary<T> = { [key: string]: T }
 
@@ -18,4 +18,9 @@ for (const key in compatChecks) {
   console.error(new Error(`Required ${key} is not available in the browser`))
 }
 
-export { Client, Code, Text }
+// Export sub-modules for ESM
+export { Client, Status }
+
+// Export a wrapper object for browser.
+const Http = { Client, Status }
+export default Http
