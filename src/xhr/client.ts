@@ -8,15 +8,15 @@ export interface RequestOptions {
   headers?: { [key: string]: string }
 }
 
-type RequestBody = { [key: string]: any } | FormData
-type HeaderObject = { [key: string]: string }
+export type RequestBody = { [key: string]: any } | FormData
+export type HeaderObject = { [key: string]: string }
 
-interface PromiseResolve<T> {
+export interface PromiseResolve<T> {
   (value?: any): any
   (value?: T): T
 }
 
-interface PromiseReject {
+export interface PromiseReject {
   (reason?: any): any
 }
 

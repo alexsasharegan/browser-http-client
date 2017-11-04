@@ -1,9 +1,9 @@
 const path = require("path")
 const rm = require("rimraf")
 
-function clean() {
+function clean(relPath) {
   return new Promise((resolve, reject) => {
-    rm(path.resolve(__dirname, "../dist"), err => {
+    rm(path.resolve(__dirname, relPath), err => {
       if (err) {
         return reject(err)
       }
@@ -13,7 +13,7 @@ function clean() {
 }
 
 async function main() {
-  await clean()
+  await Promise.all([clean("../dist/"), clean("../types/")])
 }
 
 main()

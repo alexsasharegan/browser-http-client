@@ -1,5 +1,5 @@
-type Primitives = string | number | boolean
-type PrimitiveArray = string[] | number[] | boolean[]
+export type Primitives = string | number | boolean
+export type PrimitiveArray = string[] | number[] | boolean[]
 export type QueryObject = { [index: string]: Primitives | PrimitiveArray }
 
 function encodeKeyValue(k: string, v: Primitives | PrimitiveArray): string {

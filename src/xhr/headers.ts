@@ -1,4 +1,4 @@
-type Dictionary<T> = { [key: string]: T }
+export type Dictionary<T> = { [key: string]: T }
 
 const ignoreDupeMap: Dictionary<boolean> = {
   age: true,
