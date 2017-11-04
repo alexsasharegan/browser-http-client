@@ -8,18 +8,18 @@
     "build": "npm run build:prod",
     "build:dev": "node build/clean && cross-env NODE_ENV=development webpack --config build/webpack.config.js --progress --hide-modules",
     "build:prod": "node build/clean && cross-env NODE_ENV=production webpack --config build/webpack.config.js --progress --hide-modules",
+    "size": "cat dist/http.esm.min.js | wc -c",
+    "size:gzip": "gzip -c dist/http.esm.min.js | wc -c",
+    "release": "npm run release:version && npm run release:publish",
+    "release:version": "standard-version",
+    "release:publish": "git push --follow-tags origin master; npm publish",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alexsasharegan/browser-http-client.git"
   },
-  "keywords": [
-    "http",
-    "xhr",
-    "ajax",
-    "client"
-  ],
+  "keywords": ["http", "xhr", "ajax", "client"],
   "author": "Alex Regan <alex.joseph.regan@gmail.com> (https://github.com/alexsasharegan)",
   "license": "MIT",
   "bugs": {
