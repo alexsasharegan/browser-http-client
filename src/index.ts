@@ -15,7 +15,7 @@ for (const key in compatChecks) {
   if (!compatChecks.hasOwnProperty(key) || compatChecks[key]) {
     continue
   }
-  throw new Error(`Required ${key} is not available in the browser`)
+  console.error(new Error(`Required ${key} is not available in the browser`))
 }
 
 export { Client, Code, Text }
