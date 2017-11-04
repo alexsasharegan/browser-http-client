@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.1"></a>
+## [1.0.1](https://github.com/alexsasharegan/browser-http-client/compare/v1.0.0...v1.0.1) (2017-11-04)
+
+
+### Bug Fixes
+
+* correct package.json module paths ([964cbdf](https://github.com/alexsasharegan/browser-http-client/commit/964cbdf))
+
+
+
 <a name="1.0.0"></a>
 # 1.0.0 (2017-11-04)
 
