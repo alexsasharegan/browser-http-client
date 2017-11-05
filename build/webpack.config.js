@@ -17,6 +17,7 @@ const conf = opts => {
     },
     output: {
       ...opts.output,
+      library: "Http",
       path: path.resolve(__dirname, "../dist"),
       filename: `http.${opts.ext}.js`
     },
@@ -56,6 +57,19 @@ const esm = (opts = {}) =>
     opts
   )
 
+const umd = (opts = {}) =>
+  Object.assign(
+    {},
+    {
+      minify: false,
+      ext: "umd" + (opts.minify ? ".min" : ""),
+      output: {
+        libraryTarget: "umd"
+      }
+    },
+    opts
+  )
+
 const browser = (opts = {}) =>
   Object.assign(
     {},
@@ -63,7 +77,6 @@ const browser = (opts = {}) =>
       minify: false,
       ext: "browser" + (opts.minify ? ".min" : ""),
       output: {
-        library: "Http",
         libraryTarget: "window",
         libraryExport: "default"
       }
@@ -71,4 +84,11 @@ const browser = (opts = {}) =>
     opts
   )
 
-module.exports = [conf(esm()), conf(esm({ minify: true })), conf(browser()), conf(browser({ minify: true }))]
+module.exports = [
+  conf(esm()),
+  conf(esm({ minify: true })),
+  conf(umd()),
+  conf(umd({ minify: true })),
+  conf(browser()),
+  conf(browser({ minify: true }))
+]
