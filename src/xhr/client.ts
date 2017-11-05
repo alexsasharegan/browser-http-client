@@ -1,7 +1,6 @@
 import { encodeQueryObj, QueryObject } from "../uri/encode"
 import { parseHeaders } from "./headers"
 import { Response } from "./response"
-import { Status } from "./status"
 
 export interface RequestOptions {
   query?: QueryObject
@@ -102,7 +101,7 @@ export class Client {
     response.headers = parseHeaders(this.xhr.getAllResponseHeaders())
     response.xhr = this.xhr
 
-    if (this.xhr.status < Status.OK || this.xhr.status >= Status.BadRequest) {
+    if (this.xhr.status < 200 || this.xhr.status >= 400) {
       reject(response)
     }
 

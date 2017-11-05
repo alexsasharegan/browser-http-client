@@ -2,7 +2,7 @@
 
 A browser-specific, lightweight XHR client.
 
-**Size:** `7K (gzipped: 2.7K)`
+**Size:** `4.5K (gzipped: 1.8K)`
 
 ```sh
 # npm 5 and up saves deps by default
@@ -27,15 +27,13 @@ Much of the code is adapted from the [axios client](https://github.com/axios/axi
 `browser-http-client` has zero dependencies and is built for two target environments:
 
 1. Browser: available on the window as a global (`window.Http` or simply `Http`)
-1. ESM Packaged Modules:
-  ```js
-  export {
-    // Client is the XHR client and the heart of the library.
-    Client,
-    // Status is an enum/map of HTTP status codes as registered with IANA.
-    Status,
-  }
-  ```
+1. ESM Packaged Module: default export is Http, named export `Client`
+
+*_Note: TypeScript users can dig into the package to access an enum/map of Http status codes as registered with IANA. This is not part of the default build as it requires your build tooling to compile from source (webpack: 'awesome-typescript-loader' + the 'include' directive inside loader rule)._
+
+```js
+import { Status } from "browser-http-client/src/xhr/status.ts"
+```
 
 ### Browser Example
 

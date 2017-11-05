@@ -1,5 +1,4 @@
 import { Client } from "./xhr/client"
-import { Status } from "./xhr/status"
 
 type Dictionary<T> = { [key: string]: T }
 
@@ -25,8 +24,8 @@ for (const key in compatChecks) {
 }
 
 // Export sub-modules for ESM
-export { Client, Status }
+export { Client }
 
 // Export a wrapper object for browser.
-const Http = { Client, Status }
+const Http = { Client }
 export default Http
