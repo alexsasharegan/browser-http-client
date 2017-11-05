@@ -14,9 +14,9 @@ function encodeKeyValue(k: string, v: Primitives | PrimitiveArray): string {
 }
 
 export function encodeQueryObj(query: QueryObject): string {
-  let q = ""
+  const q = []
   for (const key of Object.keys(query)) {
-    q += encodeKeyValue(key, query[key])
+    q.push(encodeKeyValue(key, query[key]))
   }
-  return q
+  return q.join("&")
 }

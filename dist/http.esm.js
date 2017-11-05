@@ -83,12 +83,12 @@ function encodeKeyValue(k, v) {
     return k + "=" + encodeURIComponent(v.toString());
 }
 function encodeQueryObj(query) {
-    var q = "";
+    var q = [];
     for (var _i = 0, _a = Object.keys(query); _i < _a.length; _i++) {
         var key = _a[_i];
-        q += encodeKeyValue(key, query[key]);
+        q.push(encodeKeyValue(key, query[key]));
     }
-    return q;
+    return q.join("&");
 }
 
 // CONCATENATED MODULE: ./src/xhr/headers.ts
@@ -150,15 +150,70 @@ var Response = (function () {
 }());
 
 
-// CONCATENATED MODULE: ./src/xhr/contentType.ts
-var ContentType = {
-    json: "application/json",
-    text: "text/plain",
-    html: "text/html",
-    form: "application/x-www-form-urlencoded",
-    multipart: "multipart/form-data",
-    stream: "application/octet-stream"
-};
+// CONCATENATED MODULE: ./src/xhr/status.ts
+var Status;
+(function (Status) {
+    Status[Status["Continue"] = 100] = "Continue";
+    Status[Status["SwitchingProtocols"] = 101] = "SwitchingProtocols";
+    Status[Status["Processing"] = 102] = "Processing";
+    Status[Status["OK"] = 200] = "OK";
+    Status[Status["Created"] = 201] = "Created";
+    Status[Status["Accepted"] = 202] = "Accepted";
+    Status[Status["NonAuthoritativeInfo"] = 203] = "NonAuthoritativeInfo";
+    Status[Status["NoContent"] = 204] = "NoContent";
+    Status[Status["ResetContent"] = 205] = "ResetContent";
+    Status[Status["PartialContent"] = 206] = "PartialContent";
+    Status[Status["MultiStatus"] = 207] = "MultiStatus";
+    Status[Status["AlreadyReported"] = 208] = "AlreadyReported";
+    Status[Status["IMUsed"] = 226] = "IMUsed";
+    Status[Status["MultipleChoices"] = 300] = "MultipleChoices";
+    Status[Status["MovedPermanently"] = 301] = "MovedPermanently";
+    Status[Status["Found"] = 302] = "Found";
+    Status[Status["SeeOther"] = 303] = "SeeOther";
+    Status[Status["NotModified"] = 304] = "NotModified";
+    Status[Status["UseProxy"] = 305] = "UseProxy";
+    Status[Status["_"] = 306] = "_";
+    Status[Status["TemporaryRedirect"] = 307] = "TemporaryRedirect";
+    Status[Status["PermanentRedirect"] = 308] = "PermanentRedirect";
+    Status[Status["BadRequest"] = 400] = "BadRequest";
+    Status[Status["Unauthorized"] = 401] = "Unauthorized";
+    Status[Status["PaymentRequired"] = 402] = "PaymentRequired";
+    Status[Status["Forbidden"] = 403] = "Forbidden";
+    Status[Status["NotFound"] = 404] = "NotFound";
+    Status[Status["MethodNotAllowed"] = 405] = "MethodNotAllowed";
+    Status[Status["NotAcceptable"] = 406] = "NotAcceptable";
+    Status[Status["ProxyAuthRequired"] = 407] = "ProxyAuthRequired";
+    Status[Status["RequestTimeout"] = 408] = "RequestTimeout";
+    Status[Status["Conflict"] = 409] = "Conflict";
+    Status[Status["Gone"] = 410] = "Gone";
+    Status[Status["LengthRequired"] = 411] = "LengthRequired";
+    Status[Status["PreconditionFailed"] = 412] = "PreconditionFailed";
+    Status[Status["RequestEntityTooLarge"] = 413] = "RequestEntityTooLarge";
+    Status[Status["RequestURITooLong"] = 414] = "RequestURITooLong";
+    Status[Status["UnsupportedMediaType"] = 415] = "UnsupportedMediaType";
+    Status[Status["RequestedRangeNotSatisfiable"] = 416] = "RequestedRangeNotSatisfiable";
+    Status[Status["ExpectationFailed"] = 417] = "ExpectationFailed";
+    Status[Status["Teapot"] = 418] = "Teapot";
+    Status[Status["UnprocessableEntity"] = 422] = "UnprocessableEntity";
+    Status[Status["Locked"] = 423] = "Locked";
+    Status[Status["FailedDependency"] = 424] = "FailedDependency";
+    Status[Status["UpgradeRequired"] = 426] = "UpgradeRequired";
+    Status[Status["PreconditionRequired"] = 428] = "PreconditionRequired";
+    Status[Status["TooManyRequests"] = 429] = "TooManyRequests";
+    Status[Status["RequestHeaderFieldsTooLarge"] = 431] = "RequestHeaderFieldsTooLarge";
+    Status[Status["UnavailableForLegalReasons"] = 451] = "UnavailableForLegalReasons";
+    Status[Status["InternalServerError"] = 500] = "InternalServerError";
+    Status[Status["NotImplemented"] = 501] = "NotImplemented";
+    Status[Status["BadGateway"] = 502] = "BadGateway";
+    Status[Status["ServiceUnavailable"] = 503] = "ServiceUnavailable";
+    Status[Status["GatewayTimeout"] = 504] = "GatewayTimeout";
+    Status[Status["HTTPVersionNotSupported"] = 505] = "HTTPVersionNotSupported";
+    Status[Status["VariantAlsoNegotiates"] = 506] = "VariantAlsoNegotiates";
+    Status[Status["InsufficientStorage"] = 507] = "InsufficientStorage";
+    Status[Status["LoopDetected"] = 508] = "LoopDetected";
+    Status[Status["NotExtended"] = 510] = "NotExtended";
+    Status[Status["NetworkAuthenticationRequired"] = 511] = "NetworkAuthenticationRequired";
+})(Status || (Status = {}));
 
 // CONCATENATED MODULE: ./src/xhr/client.ts
 
@@ -204,6 +259,9 @@ var client_Client = (function () {
     Client.prototype.applyHeaders = function () {
         for (var _i = 0, _a = Object.keys(this.headers); _i < _a.length; _i++) {
             var header = _a[_i];
+            if (!this.headers[header]) {
+                continue;
+            }
             this.xhr.setRequestHeader(header, this.headers[header]);
         }
     };
@@ -215,9 +273,9 @@ var client_Client = (function () {
         response.data = this.xhr.responseType == "text" ? this.xhr.responseText : this.xhr.response;
         response.status = this.xhr.status;
         response.statusText = this.xhr.statusText;
-        response.headers = "getAllResponseHeaders" in this.xhr ? parseHeaders(this.xhr.getAllResponseHeaders()) : {};
+        response.headers = parseHeaders(this.xhr.getAllResponseHeaders());
         response.xhr = this.xhr;
-        if (this.xhr.status < 200 || this.xhr.status >= 400) {
+        if (this.xhr.status < Status.OK || this.xhr.status >= Status.BadRequest) {
             reject(response);
         }
         resolve(response);
@@ -289,7 +347,7 @@ var client_Client = (function () {
     Client.Timeout = 0;
     Client.ResponseType = "json";
     Client.DefaultHeaders = {
-        Accept: ContentType.json,
+        Accept: "application/json",
         "Cache-Control": "no-cache",
         "X-Requested-With": "XMLHttpRequest"
     };
@@ -297,81 +355,15 @@ var client_Client = (function () {
 }());
 
 
-// CONCATENATED MODULE: ./src/xhr/status.ts
-var Status;
-(function (Status) {
-    Status[Status["Continue"] = 100] = "Continue";
-    Status[Status["SwitchingProtocols"] = 101] = "SwitchingProtocols";
-    Status[Status["Processing"] = 102] = "Processing";
-    Status[Status["OK"] = 200] = "OK";
-    Status[Status["Created"] = 201] = "Created";
-    Status[Status["Accepted"] = 202] = "Accepted";
-    Status[Status["NonAuthoritativeInfo"] = 203] = "NonAuthoritativeInfo";
-    Status[Status["NoContent"] = 204] = "NoContent";
-    Status[Status["ResetContent"] = 205] = "ResetContent";
-    Status[Status["PartialContent"] = 206] = "PartialContent";
-    Status[Status["MultiStatus"] = 207] = "MultiStatus";
-    Status[Status["AlreadyReported"] = 208] = "AlreadyReported";
-    Status[Status["IMUsed"] = 226] = "IMUsed";
-    Status[Status["MultipleChoices"] = 300] = "MultipleChoices";
-    Status[Status["MovedPermanently"] = 301] = "MovedPermanently";
-    Status[Status["Found"] = 302] = "Found";
-    Status[Status["SeeOther"] = 303] = "SeeOther";
-    Status[Status["NotModified"] = 304] = "NotModified";
-    Status[Status["UseProxy"] = 305] = "UseProxy";
-    Status[Status["_"] = 306] = "_";
-    Status[Status["TemporaryRedirect"] = 307] = "TemporaryRedirect";
-    Status[Status["PermanentRedirect"] = 308] = "PermanentRedirect";
-    Status[Status["BadRequest"] = 400] = "BadRequest";
-    Status[Status["Unauthorized"] = 401] = "Unauthorized";
-    Status[Status["PaymentRequired"] = 402] = "PaymentRequired";
-    Status[Status["Forbidden"] = 403] = "Forbidden";
-    Status[Status["NotFound"] = 404] = "NotFound";
-    Status[Status["MethodNotAllowed"] = 405] = "MethodNotAllowed";
-    Status[Status["NotAcceptable"] = 406] = "NotAcceptable";
-    Status[Status["ProxyAuthRequired"] = 407] = "ProxyAuthRequired";
-    Status[Status["RequestTimeout"] = 408] = "RequestTimeout";
-    Status[Status["Conflict"] = 409] = "Conflict";
-    Status[Status["Gone"] = 410] = "Gone";
-    Status[Status["LengthRequired"] = 411] = "LengthRequired";
-    Status[Status["PreconditionFailed"] = 412] = "PreconditionFailed";
-    Status[Status["RequestEntityTooLarge"] = 413] = "RequestEntityTooLarge";
-    Status[Status["RequestURITooLong"] = 414] = "RequestURITooLong";
-    Status[Status["UnsupportedMediaType"] = 415] = "UnsupportedMediaType";
-    Status[Status["RequestedRangeNotSatisfiable"] = 416] = "RequestedRangeNotSatisfiable";
-    Status[Status["ExpectationFailed"] = 417] = "ExpectationFailed";
-    Status[Status["Teapot"] = 418] = "Teapot";
-    Status[Status["UnprocessableEntity"] = 422] = "UnprocessableEntity";
-    Status[Status["Locked"] = 423] = "Locked";
-    Status[Status["FailedDependency"] = 424] = "FailedDependency";
-    Status[Status["UpgradeRequired"] = 426] = "UpgradeRequired";
-    Status[Status["PreconditionRequired"] = 428] = "PreconditionRequired";
-    Status[Status["TooManyRequests"] = 429] = "TooManyRequests";
-    Status[Status["RequestHeaderFieldsTooLarge"] = 431] = "RequestHeaderFieldsTooLarge";
-    Status[Status["UnavailableForLegalReasons"] = 451] = "UnavailableForLegalReasons";
-    Status[Status["InternalServerError"] = 500] = "InternalServerError";
-    Status[Status["NotImplemented"] = 501] = "NotImplemented";
-    Status[Status["BadGateway"] = 502] = "BadGateway";
-    Status[Status["ServiceUnavailable"] = 503] = "ServiceUnavailable";
-    Status[Status["GatewayTimeout"] = 504] = "GatewayTimeout";
-    Status[Status["HTTPVersionNotSupported"] = 505] = "HTTPVersionNotSupported";
-    Status[Status["VariantAlsoNegotiates"] = 506] = "VariantAlsoNegotiates";
-    Status[Status["InsufficientStorage"] = 507] = "InsufficientStorage";
-    Status[Status["LoopDetected"] = 508] = "LoopDetected";
-    Status[Status["NotExtended"] = 510] = "NotExtended";
-    Status[Status["NetworkAuthenticationRequired"] = 511] = "NetworkAuthenticationRequired";
-})(Status || (Status = {}));
-
 // CONCATENATED MODULE: ./src/index.ts
 /* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "Client", function() { return client_Client; });
 /* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "Status", function() { return Status; });
-/* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "ContentType", function() { return ContentType; });
-
 
 
 var compatChecks = {
     XMLHttpRequest: "XMLHttpRequest" in window,
     Promise: "Promise" in window,
+    FormData: "FormData" in window,
     "Array.isArray": typeof Array.isArray == "function",
     "Object.assign": typeof Object.assign == "function",
     "Object.keys": typeof Object.keys == "function"
@@ -380,10 +372,16 @@ for (var key in compatChecks) {
     if (!compatChecks.hasOwnProperty(key) || compatChecks[key]) {
         continue;
     }
-    console.error(new Error("Required " + key + " is not available in the browser"));
+    var err = new Error("[browser-http-client] Required " + key + " is not available in the browser");
+    if (typeof window.onerror == "function") {
+        throw err;
+    }
+    else {
+        console.error(err);
+    }
 }
 
-var Http = { Client: client_Client, Status: Status, ContentType: ContentType };
+var Http = { Client: client_Client, Status: Status };
 /* harmony default export */ var src = __webpack_exports__["default"] = (Http);
 
 

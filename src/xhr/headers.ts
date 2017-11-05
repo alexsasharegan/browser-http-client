@@ -28,7 +28,7 @@ function trim(str: string): string {
 }
 
 /**
- * Parse headers into an object
+ * Parse headers into an object.
  *
  * ```
  * Date: Wed, 27 Aug 2014 08:58:49 GMT

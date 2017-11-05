@@ -1,7 +1,7 @@
 import { encodeQueryObj, QueryObject } from "../uri/encode"
 import { parseHeaders } from "./headers"
 import { Response } from "./response"
-import { ContentType } from "./contentType"
+import { Status } from "./status"
 
 export interface RequestOptions {
   query?: QueryObject
@@ -29,7 +29,7 @@ export class Client {
   public static ResponseType: XMLHttpRequestResponseType = "json"
 
   public static DefaultHeaders = {
-    Accept: ContentType.json,
+    Accept: "application/json",
     "Cache-Control": "no-cache",
     "X-Requested-With": "XMLHttpRequest"
   }
@@ -84,6 +84,9 @@ export class Client {
   }
   private applyHeaders(): void {
     for (const header of Object.keys(this.headers)) {
+      if (!this.headers[header]) {
+        continue
+      }
       this.xhr.setRequestHeader(header, this.headers[header])
     }
   }
@@ -96,10 +99,10 @@ export class Client {
     response.data = this.xhr.responseType == "text" ? this.xhr.responseText : this.xhr.response
     response.status = this.xhr.status
     response.statusText = this.xhr.statusText
-    response.headers = "getAllResponseHeaders" in this.xhr ? parseHeaders(this.xhr.getAllResponseHeaders()) : {}
+    response.headers = parseHeaders(this.xhr.getAllResponseHeaders())
     response.xhr = this.xhr
 
-    if (this.xhr.status < 200 || this.xhr.status >= 400) {
+    if (this.xhr.status < Status.OK || this.xhr.status >= Status.BadRequest) {
       reject(response)
     }
 
