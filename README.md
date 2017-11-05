@@ -2,7 +2,7 @@
 
 A browser-specific, lightweight XHR client.
 
-**Size:** `4.5K (gzipped: 1.8K)`
+**Size:** UMD `4.7K (gzipped: 1.9K)`
 
 ```sh
 # npm 5 and up saves deps by default
