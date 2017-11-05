@@ -44,51 +44,35 @@ const conf = opts => {
   return $conf
 }
 
-const esm = (opts = {}) =>
-  Object.assign(
-    {},
-    {
-      minify: false,
-      ext: "esm" + (opts.minify ? ".min" : ""),
-      output: {
-        libraryTarget: "commonjs2"
-      }
-    },
-    opts
-  )
+const esm = minify => ({
+  minify: !!minify,
+  ext: "esm" + (minify ? ".min" : ""),
+  output: {
+    libraryTarget: "commonjs2"
+  }
+})
 
-const umd = (opts = {}) =>
-  Object.assign(
-    {},
-    {
-      minify: false,
-      ext: "umd" + (opts.minify ? ".min" : ""),
-      output: {
-        libraryTarget: "umd"
-      }
-    },
-    opts
-  )
+const umd = minify => ({
+  minify: !!minify,
+  ext: "umd" + (minify ? ".min" : ""),
+  output: {
+    libraryTarget: "umd"
+  }
+})
 
-const browser = (opts = {}) =>
-  Object.assign(
-    {},
-    {
-      minify: false,
-      ext: "browser" + (opts.minify ? ".min" : ""),
-      output: {
-        libraryTarget: "window",
-        libraryExport: "default"
-      }
-    },
-    opts
-  )
+const browser = minify => ({
+  minify: !!minify,
+  ext: "browser" + (minify ? ".min" : ""),
+  output: {
+    libraryTarget: "window",
+    libraryExport: "default"
+  }
+})
 
-module.exports = [
-  conf(esm()),
-  conf(esm({ minify: true })),
-  conf(umd()),
-  conf(umd({ minify: true })),
-  conf(browser()),
-  conf(browser({ minify: true }))
-]
+const exp = []
+
+for (const target of [esm, umd, browser]) {
+  exp.push(conf(target()), conf(target(true)))
+}
+
+module.exports = exp
