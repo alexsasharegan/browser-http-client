@@ -1,6 +1,6 @@
 {
   "name": "browser-http-client",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Browser-specific, lightweight XHR client.",
   "main": "dist/http.browser.min.js",
   "module": "dist/http.esm.min.js",

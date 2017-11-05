@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.5"></a>
+## [1.0.5](https://github.com/alexsasharegan/browser-http-client/compare/v1.0.4...v1.0.5) (2017-11-05)
+
+
+### Bug Fixes
+
+* **uri/encode:** fix query string elm concat ([4c3615b](https://github.com/alexsasharegan/browser-http-client/commit/4c3615b))
+
+
+
 <a name="1.0.4"></a>
 ## [1.0.4](https://github.com/alexsasharegan/browser-http-client/compare/v1.0.3...v1.0.4) (2017-11-04)
 
