@@ -27,7 +27,8 @@ const conf = opts => {
     module: {
       rules: [{ test: /\.tsx?$/, loader: "awesome-typescript-loader" }]
     },
-    plugins: [new webpack.optimize.ModuleConcatenationPlugin(), new webpack.DefinePlugin(Env)]
+    plugins: [new webpack.optimize.ModuleConcatenationPlugin(), new webpack.DefinePlugin(Env)],
+    devtool: "#source-map"
   }
 
   if (opts.minify) {

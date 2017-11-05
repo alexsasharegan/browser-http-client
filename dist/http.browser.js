@@ -319,3 +319,4 @@ var Http = { Client: client_Client };
 
 /***/ })
 /******/ ])["default"];
+//# sourceMappingURL=http.browser.js.map
