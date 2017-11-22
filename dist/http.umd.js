@@ -80,26 +80,6 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
-// CONCATENATED MODULE: ./src/uri/encode.ts
-function encodeKeyValue(k, v) {
-    k = encodeURIComponent(k);
-    if (v === void 0) {
-        return "";
-    }
-    if (Array.isArray(v)) {
-        return v.map(function (x) { return k + "[]=" + encodeURIComponent(x.toString()); }).join("&");
-    }
-    return k + "=" + encodeURIComponent(v.toString());
-}
-function encodeQueryObj(query) {
-    var q = [];
-    for (var _i = 0, _a = Object.keys(query); _i < _a.length; _i++) {
-        var key = _a[_i];
-        q.push(encodeKeyValue(key, query[key]));
-    }
-    return q.join("&");
-}
-
 // CONCATENATED MODULE: ./src/xhr/headers.ts
 var ignoreDupeMap = {
     age: true,
@@ -118,66 +98,114 @@ var ignoreDupeMap = {
     "proxy-authorization": true,
     referer: true,
     "retry-after": true,
-    "user-agent": true
+    "user-agent": true,
 };
-function trim(str) {
-    return str.replace(/^\s*/, "").replace(/\s*$/, "");
-}
-function parseHeaders(headers) {
+function Parse(headers, target) {
     if (!headers) {
-        return {};
+        return;
     }
-    var parsed = {};
-    var key;
-    var val;
-    var i;
+    var key, val, i, leadSp = /^\s*/, trailSp = /\s*$/;
     for (var _i = 0, _a = headers.split("\n"); _i < _a.length; _i++) {
         var line = _a[_i];
         i = line.indexOf(":");
-        key = trim(line.substr(0, i)).toLowerCase();
-        val = trim(line.substr(i + 1));
-        if (!key || (parsed.hasOwnProperty(key) && ignoreDupeMap[key])) {
+        key = line
+            .substr(0, i)
+            .replace(leadSp, "")
+            .replace(trailSp, "")
+            .toLowerCase();
+        val = line
+            .substr(i + 1)
+            .replace(leadSp, "")
+            .replace(trailSp, "");
+        if (key == "" || (target[key] !== undefined && ignoreDupeMap[key])) {
             continue;
         }
         if (key === "set-cookie") {
-            if (!parsed.hasOwnProperty(key)) {
-                parsed[key] = [];
+            if (!Array.isArray(target[key])) {
+                target[key] = [];
             }
-            parsed[key] = parsed[key].concat([val]);
+            ;
+            target[key].push(val);
             continue;
         }
-        parsed[key] = parsed[key] ? parsed[key] + ", " + val : val;
+        if (target[key] !== undefined) {
+            target[key] += ", " + val;
+            continue;
+        }
+        target[key] = val;
     }
-    return parsed;
 }
 
-// CONCATENATED MODULE: ./src/xhr/response.ts
-var Response = (function () {
-    function Response() {
+// CONCATENATED MODULE: ./src/encoding/url.ts
+function EncodeQuery(data) {
+    var encoded = [], e = encodeURIComponent, val = undefined, v = undefined, k = undefined;
+    for (var _i = 0, _a = Object.keys(data); _i < _a.length; _i++) {
+        k = _a[_i];
+        val = data[k];
+        if (typeof val == "function" || val === undefined) {
+            continue;
+        }
+        if (Array.isArray(val)) {
+            for (var _b = 0, val_1 = val; _b < val_1.length; _b++) {
+                v = val_1[_b];
+                if (v === undefined) {
+                    continue;
+                }
+                encoded.push(e(k) + "[]=" + e(v.toString()));
+            }
+            continue;
+        }
+        encoded.push(e(k) + "=" + e(val.toString()));
     }
-    return Response;
-}());
+    return encoded.join("&");
+}
 
+// CONCATENATED MODULE: ./src/xhr/contentType.ts
+var ContentType;
+(function (ContentType) {
+    ContentType["Json"] = "application/json";
+    ContentType["Text"] = "text/plain";
+    ContentType["Html"] = "text/html";
+    ContentType["Form"] = "application/x-www-form-urlencoded";
+    ContentType["Multipart"] = "multipart/form-data";
+    ContentType["Stream"] = "application/octet-stream";
+})(ContentType || (ContentType = {}));
 
 // CONCATENATED MODULE: ./src/xhr/client.ts
 
 
 
+function newResponse(xhr) {
+    var r = Object.create(null);
+    r.xhr = xhr;
+    if (xhr.responseType == "text") {
+        r.data = xhr.responseText;
+    }
+    else {
+        r.data = xhr.response;
+    }
+    r.status = xhr.status;
+    r.statusText = xhr.statusText;
+    r.headers = Object.create(null);
+    Parse(xhr.getAllResponseHeaders(), r.headers);
+    return r;
+}
 var client_Client = (function () {
     function Client(method, url) {
+        this.method = method;
+        this.url = url;
+        this.xhr = new XMLHttpRequest();
+        this.headers = Object.assign(Object.create(null), Client.DefaultHeaders);
         this.data = null;
         this.responseType = Client.ResponseType;
         this.timeout = Client.Timeout;
         this.queryAdded = false;
-        Object.assign(this, {
-            method: method,
-            url: url,
-            headers: Object.assign({}, Client.DefaultHeaders),
-            xhr: new XMLHttpRequest()
-        });
     }
-    Client.prototype.setHeaders = function (headers) {
+    Client.prototype.addHeaders = function (headers) {
         Object.assign(this.headers, headers);
+    };
+    Client.prototype.setHeaders = function (headers) {
+        this.headers = Object.assign(Object.create(null), headers);
     };
     Client.prototype.addQueryString = function (query) {
         if (this.queryAdded) {
@@ -188,7 +216,7 @@ var client_Client = (function () {
         this.queryAdded = true;
     };
     Client.prototype.addQueryObject = function (query) {
-        this.addQueryString(encodeQueryObj(query));
+        this.addQueryString(EncodeQuery(query));
     };
     Client.prototype.setData = function (data) {
         if (!data) {
@@ -196,12 +224,13 @@ var client_Client = (function () {
         }
         if (data instanceof FormData || data instanceof Document) {
             this.data = data;
+            return;
         }
         this.data = JSON.stringify(data);
+        this.addHeaders({ "Content-Type": ContentType.Json });
     };
     Client.prototype.applyHeaders = function () {
-        for (var _i = 0, _a = Object.keys(this.headers); _i < _a.length; _i++) {
-            var header = _a[_i];
+        for (var header in this.headers) {
             if (!this.headers[header]) {
                 continue;
             }
@@ -212,16 +241,11 @@ var client_Client = (function () {
         if (this.xhr.readyState !== XMLHttpRequest.DONE) {
             return;
         }
-        var response = new Response();
-        response.data = this.xhr.responseType == "text" ? this.xhr.responseText : this.xhr.response;
-        response.status = this.xhr.status;
-        response.statusText = this.xhr.statusText;
-        response.headers = parseHeaders(this.xhr.getAllResponseHeaders());
-        response.xhr = this.xhr;
+        var r = newResponse(this.xhr);
         if (this.xhr.status < 200 || this.xhr.status >= 400) {
-            reject(response);
+            reject(r);
         }
-        resolve(response);
+        resolve(r);
     };
     Client.prototype.execute = function (resolve, reject) {
         this.xhr.open(this.method, this.url, Client.Async);
@@ -242,7 +266,7 @@ var client_Client = (function () {
         if (options.query) {
             client.addQueryObject(options.query);
         }
-        if (method != "GET" && options.data) {
+        if (options.data) {
             client.setData(options.data);
         }
         if (options.responseType) {
@@ -280,19 +304,12 @@ var client_Client = (function () {
     Client.setResponseType = function (type) {
         Client.ResponseType = type;
     };
-    Object.defineProperty(Client, "Async", {
-        get: function () {
-            return true;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Client.Timeout = 0;
     Client.ResponseType = "json";
+    Client.Async = true;
     Client.DefaultHeaders = {
-        Accept: "application/json",
-        "Cache-Control": "no-cache",
-        "X-Requested-With": "XMLHttpRequest"
+        Accept: ContentType.Json,
+        "X-Requested-With": "XMLHttpRequest",
     };
     return Client;
 }());
@@ -301,25 +318,23 @@ var client_Client = (function () {
 // CONCATENATED MODULE: ./src/index.ts
 /* concated harmony reexport */__webpack_require__.d(__webpack_exports__, "Client", function() { return client_Client; });
 
-var compatChecks = {
-    XMLHttpRequest: "XMLHttpRequest" in window,
-    Promise: "Promise" in window,
-    FormData: "FormData" in window,
-    "Array.isArray": typeof Array.isArray == "function",
-    "Object.assign": typeof Object.assign == "function",
-    "Object.keys": typeof Object.keys == "function"
-};
-for (var key in compatChecks) {
-    if (!compatChecks.hasOwnProperty(key) || compatChecks[key]) {
+var key = "", err = null, compatChecks = Object.create(null);
+compatChecks.XMLHttpRequest = "XMLHttpRequest" in window;
+compatChecks.Promise = "Promise" in window;
+compatChecks.FormData = "FormData" in window;
+compatChecks["Array.isArray"] = typeof Array.isArray == "function";
+compatChecks["Object.assign"] = typeof Object.assign == "function";
+compatChecks["Object.keys"] = typeof Object.keys == "function";
+compatChecks["Object.create"] = typeof Object.create == "function";
+for (key in compatChecks) {
+    if (compatChecks[key]) {
         continue;
     }
-    var err = new Error("[browser-http-client] Required " + key + " is not available in the browser");
+    err = new Error("[browser-http-client] A required API is not available in the browser: " + key);
     if (typeof window.onerror == "function") {
-        throw err;
+        window.onerror(err.message, err.fileName, err.lineNumber, err.columnNumber, err);
     }
-    else {
-        console.error(err);
-    }
+    console.error(err);
 }
 
 var Http = { Client: client_Client };
