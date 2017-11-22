@@ -1,8 +1,8 @@
-export const ContentType = {
-  json: "application/json",
-  text: "text/plain",
-  html: "text/html",
-  form: "application/x-www-form-urlencoded",
-  multipart: "multipart/form-data",
-  stream: "application/octet-stream"
+export enum ContentType {
+	Json = "application/json",
+	Text = "text/plain",
+	Html = "text/html",
+	Form = "application/x-www-form-urlencoded",
+	Multipart = "multipart/form-data",
+	Stream = "application/octet-stream",
 }

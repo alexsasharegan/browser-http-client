@@ -1,71 +1,127 @@
 export type Dictionary<T> = { [key: string]: T }
 
 const ignoreDupeMap: Dictionary<boolean> = {
-  age: true,
-  authorization: true,
-  "content-length": true,
-  "content-type": true,
-  etag: true,
-  expires: true,
-  from: true,
-  host: true,
-  "if-modified-since": true,
-  "if-unmodified-since": true,
-  "last-modified": true,
-  location: true,
-  "max-forwards": true,
-  "proxy-authorization": true,
-  referer: true,
-  "retry-after": true,
-  "user-agent": true
+	age: true,
+	authorization: true,
+	"content-length": true,
+	"content-type": true,
+	etag: true,
+	expires: true,
+	from: true,
+	host: true,
+	"if-modified-since": true,
+	"if-unmodified-since": true,
+	"last-modified": true,
+	location: true,
+	"max-forwards": true,
+	"proxy-authorization": true,
+	referer: true,
+	"retry-after": true,
+	"user-agent": true,
 }
 
 /**
- * Removes all leading and trailing white space characters.
- */
-function trim(str: string): string {
-  return str.replace(/^\s*/, "").replace(/\s*$/, "")
-}
-
-/**
- * Parse headers into an object.
+ * Parse headers into the target object.
  *
  * ```
- * Date: Wed, 27 Aug 2014 08:58:49 GMT
+ * const resHeaders =
+ * `Date: Wed, 27 Aug 2014 08:58:49 GMT
  * Content-Type: application/json
  * Connection: keep-alive
- * Transfer-Encoding: chunked
+ * Transfer-Encoding: chunked`
+ *
+ * parseHeaders(resHeaders)
+ * // Output:
+ * { date: 'Wed, 27 Aug 2014 08:58:49 GMT',
+ *  'content-type': 'application/json',
+ *  connection: 'keep-alive',
+ *  'transfer-encoding': 'chunked' }
  * ```
  */
-export function parseHeaders(headers: string): object {
-  if (!headers) {
-    return {}
-  }
+export function Parse(headers: string, target: { [key: string]: string | string[] | undefined }): void {
+	if (!headers) {
+		return
+	}
 
-  const parsed: { [key: string]: any } = {}
-  let key: string
-  let val: string
-  let i: number
+	let key: string,
+		val: string,
+		i: number,
+		leadSp = /^\s*/,
+		trailSp = /\s*$/
 
-  for (const line of headers.split("\n")) {
-    i = line.indexOf(":")
-    key = trim(line.substr(0, i)).toLowerCase()
-    val = trim(line.substr(i + 1))
+	for (const line of headers.split("\n")) {
+		i = line.indexOf(":")
+		key = line
+			.substr(0, i)
+			.replace(leadSp, "")
+			.replace(trailSp, "")
+			.toLowerCase()
+		val = line
+			.substr(i + 1)
+			.replace(leadSp, "")
+			.replace(trailSp, "")
 
-    // Skip empty keys and defined items in the ignore list.
-    if (!key || (parsed.hasOwnProperty(key) && ignoreDupeMap[key])) {
-      continue
-    }
-    if (key === "set-cookie") {
-      if (!parsed.hasOwnProperty(key)) {
-        parsed[key] = []
-      }
-      parsed[key] = parsed[key].concat([val])
-      continue
-    }
+		// Skip empty keys and defined items in the ignore list.
+		if (key == "" || (target[key] !== undefined && ignoreDupeMap[key])) {
+			continue
+		}
+		if (key === "set-cookie") {
+			if (!Array.isArray(target[key])) {
+				target[key] = []
+			}
+			;(target[key] as string[]).push(val)
+			continue
+		}
 
-    parsed[key] = parsed[key] ? parsed[key] + ", " + val : val
-  }
+		if (target[key] !== undefined) {
+			target[key] += ", " + val
+			continue
+		}
 
-  return parsed
+		target[key] = val
+	}
+}
+
+export interface HttpHeaders {
+	Accept?: string
+	"Access-Control-Allow-Origin"?: string
+	"Access-Control-Allow-Credentials"?: string
+	"Access-Control-Expose-Headers"?: string
+	"Access-Control-Max-Age"?: string
+	"Access-Control-Allow-Methods"?: string
+	"Access-Control-Allow-Headers"?: string
+	"Accept-Patch"?: string
+	"Accept-Ranges"?: string
+	Age?: string
+	Allow?: string
+	"Alt-Svc"?: string
+	"Cache-Control"?: string
+	connection?: string
+	"Content-Disposition"?: string
+	"Content-Encoding"?: string
+	"Content-Language"?: string
+	"Content-Length"?: string
+	"Content-Location"?: string
+	"Content-Range"?: string
+	"Content-Type"?: string
+	Date?: string
+	Expires?: string
+	Host?: string
+	"Last-Modified"?: string
+	Location?: string
+	Pragma?: string
+	"Proxy-Authenticate"?: string
+	"Public-Key-Pins"?: string
+	"Retry-After"?: string
+	"Set-Cookie"?: string
+	"Strict-Transport-Security"?: string
+	Trailer?: string
+	"Transfer-Encoding"?: string
+	Tk?: string
+	Upgrade?: string
+	Vary?: string
+	Via?: string
+	Warning?: string
+	"Www-Authenticate"?: string
+	[header: string]: string | undefined
 }

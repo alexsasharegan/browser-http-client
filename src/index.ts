@@ -2,25 +2,27 @@ import { Client } from "./xhr/client"
 
 type Dictionary<T> = { [key: string]: T }
 
-const compatChecks: Dictionary<boolean> = {
-  XMLHttpRequest: "XMLHttpRequest" in window,
-  Promise: "Promise" in window,
-  FormData: "FormData" in window,
-  "Array.isArray": typeof Array.isArray == "function",
-  "Object.assign": typeof Object.assign == "function",
-  "Object.keys": typeof Object.keys == "function"
-}
+let key = "",
+	err = null,
+	compatChecks: Dictionary<boolean> = Object.create(null)
 
-for (const key in compatChecks) {
-  if (!compatChecks.hasOwnProperty(key) || compatChecks[key]) {
-    continue
-  }
-  const err = new Error(`[browser-http-client] Required ${key} is not available in the browser`)
-  if (typeof window.onerror == "function") {
-    throw err
-  } else {
-    console.error(err)
-  }
+compatChecks.XMLHttpRequest = "XMLHttpRequest" in window
+compatChecks.Promise = "Promise" in window
+compatChecks.FormData = "FormData" in window
+compatChecks["Array.isArray"] = typeof Array.isArray == "function"
+compatChecks["Object.assign"] = typeof Object.assign == "function"
+compatChecks["Object.keys"] = typeof Object.keys == "function"
+compatChecks["Object.create"] = typeof Object.create == "function"
+
+for (key in compatChecks) {
+	if (compatChecks[key]) {
+		continue
+	}
+	err = new Error(`[browser-http-client] A required API is not available in the browser: ${key}`)
+	if (typeof window.onerror == "function") {
+		window.onerror(err.message, (err as any).fileName, (err as any).lineNumber, (err as any).columnNumber, err)
+	}
+	console.error(err)
 }
 
 // Export sub-modules for ESM
