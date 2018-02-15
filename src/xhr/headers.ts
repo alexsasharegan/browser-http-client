@@ -1,24 +1,24 @@
-export type Dictionary<T> = { [key: string]: T }
+export type Dictionary<T> = { [key: string]: T };
 
 const ignoreDupeMap: Dictionary<boolean> = {
-	age: true,
-	authorization: true,
-	"content-length": true,
-	"content-type": true,
-	etag: true,
-	expires: true,
-	from: true,
-	host: true,
-	"if-modified-since": true,
-	"if-unmodified-since": true,
-	"last-modified": true,
-	location: true,
-	"max-forwards": true,
-	"proxy-authorization": true,
-	referer: true,
-	"retry-after": true,
-	"user-agent": true,
-}
+  age: true,
+  authorization: true,
+  "content-length": true,
+  "content-type": true,
+  etag: true,
+  expires: true,
+  from: true,
+  host: true,
+  "if-modified-since": true,
+  "if-unmodified-since": true,
+  "last-modified": true,
+  location: true,
+  "max-forwards": true,
+  "proxy-authorization": true,
+  referer: true,
+  "retry-after": true,
+  "user-agent": true,
+};
 
 /**
  * Parse headers into the target object.
@@ -38,90 +38,93 @@ const ignoreDupeMap: Dictionary<boolean> = {
  *  'transfer-encoding': 'chunked' }
  * ```
  */
-export function Parse(headers: string, target: { [key: string]: string | string[] | undefined }): void {
-	if (!headers) {
-		return
-	}
+export function Parse(
+  headers: string,
+  target: { [key: string]: string | string[] | undefined }
+): void {
+  if (!headers) {
+    return;
+  }
 
-	let key: string,
-		val: string,
-		i: number,
-		leadSp = /^\s*/,
-		trailSp = /\s*$/
+  let key: string,
+    val: string,
+    i: number,
+    leadSp = /^\s*/,
+    trailSp = /\s*$/;
 
-	for (const line of headers.split("\n")) {
-		i = line.indexOf(":")
-		key = line
-			.substr(0, i)
-			.replace(leadSp, "")
-			.replace(trailSp, "")
-			.toLowerCase()
-		val = line
-			.substr(i + 1)
-			.replace(leadSp, "")
-			.replace(trailSp, "")
+  for (const line of headers.split("\n")) {
+    i = line.indexOf(":");
+    key = line
+      .substr(0, i)
+      .replace(leadSp, "")
+      .replace(trailSp, "")
+      .toLowerCase();
+    val = line
+      .substr(i + 1)
+      .replace(leadSp, "")
+      .replace(trailSp, "");
 
-		// Skip empty keys and defined items in the ignore list.
-		if (key == "" || (target[key] !== undefined && ignoreDupeMap[key])) {
-			continue
-		}
-		if (key === "set-cookie") {
-			if (!Array.isArray(target[key])) {
-				target[key] = []
-			}
-			;(target[key] as string[]).push(val)
-			continue
-		}
+    // Skip empty keys and defined items in the ignore list.
+    if (key == "" || (target[key] !== undefined && ignoreDupeMap[key])) {
+      continue;
+    }
+    if (key === "set-cookie") {
+      if (!Array.isArray(target[key])) {
+        target[key] = [];
+      }
+      (target[key] as string[]).push(val);
+      continue;
+    }
 
-		if (target[key] !== undefined) {
-			target[key] += ", " + val
-			continue
-		}
+    if (target[key] !== undefined) {
+      target[key] += ", " + val;
+      continue;
+    }
 
-		target[key] = val
-	}
+    target[key] = val;
+  }
 }
 
 export interface HttpHeaders {
-	Accept?: string
-	"Access-Control-Allow-Origin"?: string
-	"Access-Control-Allow-Credentials"?: string
-	"Access-Control-Expose-Headers"?: string
-	"Access-Control-Max-Age"?: string
-	"Access-Control-Allow-Methods"?: string
-	"Access-Control-Allow-Headers"?: string
-	"Accept-Patch"?: string
-	"Accept-Ranges"?: string
-	Age?: string
-	Allow?: string
-	"Alt-Svc"?: string
-	"Cache-Control"?: string
-	connection?: string
-	"Content-Disposition"?: string
-	"Content-Encoding"?: string
-	"Content-Language"?: string
-	"Content-Length"?: string
-	"Content-Location"?: string
-	"Content-Range"?: string
-	"Content-Type"?: string
-	Date?: string
-	Expires?: string
-	Host?: string
-	"Last-Modified"?: string
-	Location?: string
-	Pragma?: string
-	"Proxy-Authenticate"?: string
-	"Public-Key-Pins"?: string
-	"Retry-After"?: string
-	"Set-Cookie"?: string
-	"Strict-Transport-Security"?: string
-	Trailer?: string
-	"Transfer-Encoding"?: string
-	Tk?: string
-	Upgrade?: string
-	Vary?: string
-	Via?: string
-	Warning?: string
-	"Www-Authenticate"?: string
-	[header: string]: string | undefined
+  Accept?: string;
+  "Access-Control-Allow-Origin"?: string;
+  "Access-Control-Allow-Credentials"?: string;
+  "Access-Control-Expose-Headers"?: string;
+  "Access-Control-Max-Age"?: string;
+  "Access-Control-Allow-Methods"?: string;
+  "Access-Control-Allow-Headers"?: string;
+  "Accept-Patch"?: string;
+  "Accept-Ranges"?: string;
+  Age?: string;
+  Allow?: string;
+  "Alt-Svc"?: string;
+  "Cache-Control"?: string;
+  connection?: string;
+  "Content-Disposition"?: string;
+  "Content-Encoding"?: string;
+  "Content-Language"?: string;
+  "Content-Length"?: string;
+  "Content-Location"?: string;
+  "Content-Range"?: string;
+  "Content-Type"?: string;
+  Date?: string;
+  Expires?: string;
+  Host?: string;
+  "Last-Modified"?: string;
+  Location?: string;
+  Pragma?: string;
+  "Proxy-Authenticate"?: string;
+  "Public-Key-Pins"?: string;
+  "Retry-After"?: string;
+  "Set-Cookie"?: string;
+  "Strict-Transport-Security"?: string;
+  Trailer?: string;
+  "Transfer-Encoding"?: string;
+  Tk?: string;
+  Upgrade?: string;
+  Vary?: string;
+  Via?: string;
+  Warning?: string;
+  "Www-Authenticate"?: string;
+  [header: string]: string | undefined;
 }
