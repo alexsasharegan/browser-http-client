@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="2.0.0"></a>
+# [2.0.0](https://github.com/alexsasharegan/browser-http-client/compare/v1.3.2...v2.0.0) (2018-02-17)
+
+
+### Features
+
+* use rollup for smaller bundle ([a5b1154](https://github.com/alexsasharegan/browser-http-client/commit/a5b1154))
+
+
+### BREAKING CHANGES
+
+* removed default export
+* only esm or umd bundles
+* use UN-minified builds by default
+* ignore dist folder
+
+
+
 <a name="1.3.2"></a>
 ## [1.3.2](https://github.com/alexsasharegan/browser-http-client/compare/v1.3.1...v1.3.2) (2017-11-22)
 
