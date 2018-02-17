@@ -7,17 +7,15 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "clean": "node build/clean",
-    "predev": "npm run clean",
     "prebuild": "npm run clean",
-    "dev": "npm run build:dev",
     "build": "npm run build:prod",
     "build:prod": "cross-env NODE_ENV=production rollup -c build/rollup.config.js && rollup -c build/rollup.min.js",
-    "build:dev": "cross-env NODE_ENV=development rollup -c build/rollup.config.js && rollup -c build/rollup.min.js",
     "size": "cat lib/http.esm.min.js | wc -c",
     "size:gzip": "gzip -c lib/http.esm.min.js | wc -c",
     "release": "npm run release:version && npm run release:publish",
     "release:version": "standard-version",
     "release:publish": "git push --follow-tags origin master; npm publish",
+    "prepublishOnly": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
