@@ -16,6 +16,7 @@ coverage
 
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
+.rpt2_cache
 
 # node-waf configuration
 .lock-wscript
@@ -29,5 +30,8 @@ node_modules/
 .vscode/
 .idea/
 tmp/
+
+dist
+lib
 
 .DS_Store

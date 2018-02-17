@@ -35,6 +35,3 @@ for (key in compatChecks) {
 
 // Export sub-modules for ESM
 export { Client };
-
-// Export a wrapper object for browser.
-export default { Client };
