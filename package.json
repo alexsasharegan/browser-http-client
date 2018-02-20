@@ -2,14 +2,14 @@
   "name": "browser-http-client",
   "version": "2.0.0",
   "description": "Browser-specific, lightweight XHR client.",
-  "main": "lib/http.js",
+  "main": "lib/http.esm.js",
   "module": "lib/http.esm.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "clean": "node build/clean",
     "prebuild": "npm run clean",
     "build": "npm run build:prod",
-    "build:prod": "cross-env NODE_ENV=production rollup -c build/rollup.config.js && rollup -c build/rollup.min.js",
+    "build:prod": "cross-env NODE_ENV=production rollup -c build/rollup.config.js",
     "size": "cat lib/http.esm.min.js | wc -c",
     "size:gzip": "gzip -c lib/http.esm.min.js | wc -c",
     "release": "npm run release:version && npm run release:publish",
@@ -50,5 +50,8 @@
     "typescript": "^2.6.1",
     "webpack": "^3.8.1",
     "webpack-merge": "^4.1.1"
+  },
+  "dependencies": {
+    "safe-types": "^3.1.0"
   }
 }

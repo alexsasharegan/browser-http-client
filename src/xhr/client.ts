@@ -1,11 +1,12 @@
-import * as headers from "./headers";
-import * as url from "../encoding/url";
+import { Ok, Err, Option, Result, Some, None } from "safe-types";
+import * as Headers from "./headers";
+import * as QStr from "../encoding/qstr";
 import { ContentType } from "./contentType";
 
 export interface RequestOptions {
-  query?: url.QueryObject;
+  query?: QStr.QueryObject;
   data?: RequestData;
-  headers?: headers.HttpHeaders;
+  headers?: Headers.HttpHeaders;
   responseType?: XMLHttpRequestResponseType;
   timeout?: number;
 }
@@ -13,40 +14,58 @@ export interface RequestOptions {
 export type RequestData = { [key: string]: any } | FormData | Document;
 export type RequestBody = string | FormData | Document;
 
-export interface Response {
-  data: any;
+export interface Response<T = any> {
+  data: T;
   status: number;
   statusText: string;
-  headers: object;
+  headers: { [field: string]: string | string[] };
   xhr: XMLHttpRequest;
 }
 
-function newResponse(xhr: XMLHttpRequest): Response {
-  let r = Object.create(null);
+export type ClientErrorBasic<T> = {
+  readonly type: ResErrCode.Abort | ResErrCode.HttpStatusErr;
+  response: Option<Response<T>>;
+  event: Event;
+};
+
+export type ClientErrorProgress<T> = {
+  readonly type: ResErrCode.Timeout;
+  response: Option<Response<T>>;
+  event: ProgressEvent;
+};
+
+export type ClientErrorError<T> = {
+  readonly type: ResErrCode.XhrErr;
+  response: Option<Response<T>>;
+  event: ErrorEvent;
+};
+
+export type ClientError<T> =
+  | ClientErrorBasic<T>
+  | ClientErrorProgress<T>
+  | ClientErrorError<T>;
+
+export enum ResErrCode {
+  HttpStatusErr = 1,
+  XhrErr,
+  Timeout,
+  Abort,
+}
+
+function new_response<T>(xhr: XMLHttpRequest): Response<T> {
+  let r: Response<T> = Object.create(null);
 
   r.xhr = xhr;
-
-  if (xhr.responseType == "text") {
-    r.data = xhr.responseText;
-  } else {
-    r.data = xhr.response;
-  }
-
+  r.data = xhr.response;
   r.status = xhr.status;
   r.statusText = xhr.statusText;
-  r.headers = Object.create(null);
-  headers.Parse(xhr.getAllResponseHeaders(), r.headers);
+  r.headers = Headers.parse(xhr.getAllResponseHeaders(), Object.create(null));
 
   return r;
 }
 
-export interface PromiseResolve<T> {
-  (value?: any): any;
-  (value?: T): T;
-}
-
-export interface PromiseReject {
-  (reason?: any): any;
+export interface PromiseResolver<T> {
+  (value: T): T;
 }
 
 export class Client {
@@ -60,11 +79,11 @@ export class Client {
   };
 
   private xhr: XMLHttpRequest = new XMLHttpRequest();
-  private headers: headers.HttpHeaders = Object.assign(
+  private headers: Headers.HttpHeaders = Object.assign(
     Object.create(null),
     Client.DefaultHeaders
   );
-  private data: RequestBody = null;
+  private data: RequestBody;
   private query: string;
   private responseType: XMLHttpRequestResponseType = Client.ResponseType;
   private timeout: number = Client.Timeout;
@@ -73,18 +92,20 @@ export class Client {
   constructor(private method: string, private url: string) {}
 
   /**
-   * Adds an object of headers via `Object.assign` that will be written to the XHR.
+   * Adds an object of headers via `Object.assign`
+   * that will be written to the XHR.
    */
-  addHeaders(headers: headers.HttpHeaders): void {
+  public addHeaders(headers: Headers.HttpHeaders): void {
     Object.assign(this.headers, headers);
   }
   /**
    * Sets a new object of headers that will be written to the XHR.
    */
-  setHeaders(headers: headers.HttpHeaders): void {
+  public setHeaders(headers: Headers.HttpHeaders): void {
     this.headers = Object.assign(Object.create(null), headers);
   }
-  addQueryString(query: string): void {
+
+  public addQueryStr(query: string): void {
     if (this.queryAdded) {
       throw new Error("Cannot add query string twice.");
     }
@@ -92,14 +113,12 @@ export class Client {
     this.url += query;
     this.queryAdded = true;
   }
-  addQueryObject(query: url.QueryObject): void {
-    this.addQueryString(url.EncodeQuery(query));
+
+  public addQueryObj(query: QStr.QueryObject): void {
+    this.addQueryStr(QStr.encode_query(query));
   }
 
   private setData(data: RequestData): void {
-    if (!data) {
-      return;
-    }
     if (data instanceof FormData || data instanceof Document) {
       this.data = data;
       return;
@@ -107,56 +126,92 @@ export class Client {
     this.data = JSON.stringify(data);
     this.addHeaders({ "Content-Type": ContentType.Json });
   }
+
   private applyHeaders(): void {
-    for (const header in this.headers) {
+    let header: string;
+    for (header in this.headers) {
       if (!this.headers[header]) {
         continue;
       }
       this.xhr.setRequestHeader(header, this.headers[header]);
     }
   }
-  private handleReadyStateChange(
-    resolve: PromiseResolve<Response>,
-    reject: PromiseReject
+
+  private handleReadyStateChange<T>(
+    resolve: PromiseResolver<Result<Response<T>, ClientError<T>>>,
+    event: Event
   ) {
     if (this.xhr.readyState !== XMLHttpRequest.DONE) {
       return;
     }
 
-    let r = newResponse(this.xhr);
+    let r = new_response<T>(this.xhr);
     if (this.xhr.status < 200 || this.xhr.status >= 400) {
-      reject(r);
+      resolve(
+        Err(<ClientErrorBasic<T>>{
+          type: ResErrCode.HttpStatusErr,
+          response: Some(r),
+          event,
+        })
+      );
     }
 
-    resolve(r);
+    resolve(Ok(r));
   }
-  private execute(resolve: PromiseResolve<Response>, reject: PromiseReject) {
+
+  private execute<T>(
+    resolve: PromiseResolver<Result<Response<T>, ClientError<T>>>
+  ) {
     this.xhr.open(this.method, this.url, Client.Async);
     this.xhr.responseType = this.responseType;
     this.xhr.timeout = this.timeout;
     this.applyHeaders();
     this.xhr.onreadystatechange = this.handleReadyStateChange.bind(
       this,
-      resolve,
-      reject
+      resolve
     );
-    this.xhr.ontimeout = reject;
-    this.xhr.onerror = reject;
+    this.xhr.ontimeout = event =>
+      resolve(
+        Err(<ClientErrorProgress<T>>{
+          type: ResErrCode.Timeout,
+          response: None(),
+          event,
+        })
+      );
+    this.xhr.onabort = event =>
+      resolve(
+        Err(<ClientErrorBasic<T>>{
+          type: ResErrCode.Abort,
+          response: None(),
+          event,
+        })
+      );
+    this.xhr.onerror = event =>
+      resolve(
+        Err(<ClientErrorError<T>>{
+          type: ResErrCode.XhrErr,
+          response: None(),
+          event,
+        })
+      );
+    this.xhr.upload;
     this.xhr.send(this.data);
   }
 
-  do(): Promise<Response> {
-    return new Promise<Response>(this.execute.bind(this));
+  public do<T = any>(): Promise<Result<Response<T>, ClientError<T>>> {
+    return new Promise<Result<Response<T>, ClientError<T>>>(
+      this.execute.bind(this)
+    );
   }
 
-  static make(
+  public static make(
     method: string,
     url: string,
     options: RequestOptions = {}
   ): Client {
     const client = new Client(method, url);
     if (options.query) {
-      client.addQueryObject(options.query);
+      client.addQueryObj(options.query);
     }
     if (options.data) {
       client.setData(options.data);
@@ -173,37 +228,44 @@ export class Client {
     return client;
   }
 
-  public static get(url: string, query?: url.QueryObject): Promise<Response> {
+  public static get<T = any>(
+    url: string,
+    query?: QStr.QueryObject
+  ): Promise<Result<Response<T>, ClientError<T>>> {
     return Client.make("GET", url, { query }).do();
   }
-  public static post(
+
+  public static post<T = any>(
     url: string,
     data: RequestData,
     options: RequestOptions = {}
-  ): Promise<Response> {
+  ): Promise<Result<Response<T>, ClientError<T>>> {
     options.data = data;
     return Client.make("POST", url, options).do();
   }
-  public static put(
+
+  public static put<T = any>(
     url: string,
     data: RequestData,
     options: RequestOptions = {}
-  ): Promise<Response> {
+  ): Promise<Result<Response<T>, ClientError<T>>> {
     options.data = data;
     return Client.make("PUT", url, options).do();
   }
-  public static patch(
+
+  public static patch<T = any>(
     url: string,
     data: RequestData,
     options: RequestOptions = {}
-  ): Promise<Response> {
+  ): Promise<Result<Response<T>, ClientError<T>>> {
     options.data = data;
     return Client.make("PATCH", url, options).do();
   }
-  public static delete(
+
+  public static delete<T = any>(
     url: string,
-    query?: url.QueryObject
-  ): Promise<Response> {
+    query?: QStr.QueryObject
+  ): Promise<Result<Response<T>, ClientError<T>>> {
     return Client.make("DELETE", url, { query }).do();
   }
 
