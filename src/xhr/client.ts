@@ -1,4 +1,4 @@
-import { Ok, Err, Option, Result, Some, None } from "safe-types";
+import { Ok, Err, Result, expect_never } from "safe-types";
 import * as Headers from "./headers";
 import * as QStr from "../encoding/qstr";
 import { ContentType } from "./contentType";
@@ -22,34 +22,77 @@ export interface Response<T = any> {
   xhr: XMLHttpRequest;
 }
 
-export type ClientErrorBasic<T> = {
-  readonly type: ResErrCode.Abort | ResErrCode.HttpStatusErr;
-  response: Option<Response<T>>;
+export type Matchable<T> = { match: ClientErrMatcher<T> };
+
+export type ClientErrorStatus<T> = {
+  readonly type: RequestErrType.HttpStatusErr;
+  response: Response<T>;
   event: Event;
 };
 
-export type ClientErrorProgress<T> = {
-  readonly type: ResErrCode.Timeout;
-  response: Option<Response<T>>;
+export type ClientErrorAbort = {
+  readonly type: RequestErrType.Abort;
+  event: Event;
+};
+
+export type ClientErrorProgress = {
+  readonly type: RequestErrType.Timeout;
   event: ProgressEvent;
 };
 
-export type ClientErrorError<T> = {
-  readonly type: ResErrCode.XhrErr;
-  response: Option<Response<T>>;
+export type ClientErrorError = {
+  readonly type: RequestErrType.XhrErr;
   event: ErrorEvent;
 };
 
-export type ClientError<T> =
-  | ClientErrorBasic<T>
-  | ClientErrorProgress<T>
-  | ClientErrorError<T>;
+export type ClientErrorBase<T> =
+  | ClientErrorStatus<T>
+  | ClientErrorAbort
+  | ClientErrorProgress
+  | ClientErrorError;
 
-export enum ResErrCode {
-  HttpStatusErr = 1,
-  XhrErr,
-  Timeout,
-  Abort,
+export type ClientError<T> =
+  | Matchable<T> & ClientErrorStatus<T>
+  | Matchable<T> & ClientErrorAbort
+  | Matchable<T> & ClientErrorProgress
+  | Matchable<T> & ClientErrorError;
+
+export type ErrMatchObj<T, U> = {
+  [type in RequestErrType]: (err: ClientErrorBase<T>) => U
+};
+
+export interface ClientErrMatcher<T> {
+  <U>(matcher: ErrMatchObj<T, U>): U;
+}
+
+function err_with_matcher<T>(err: ClientErrorBase<T>): ClientError<T> {
+  return Object.assign(err, {
+    match<U>(matcher: ErrMatchObj<T, U>): U {
+      switch (err.type) {
+        case RequestErrType.Abort:
+          return matcher[RequestErrType.Abort](err);
+
+        case RequestErrType.HttpStatusErr:
+          return matcher[RequestErrType.HttpStatusErr](err);
+
+        case RequestErrType.Timeout:
+          return matcher[RequestErrType.Timeout](err);
+
+        case RequestErrType.XhrErr:
+          return matcher[RequestErrType.XhrErr](err);
+
+        default:
+          return expect_never(err, "invalid error type");
+      }
+    },
+  });
+}
+
+export enum RequestErrType {
+  HttpStatusErr = "HttpStatusErr",
+  XhrErr = "XhrErr",
+  Timeout = "Timeout",
+  Abort = "Abort",
 }
 
 function new_response<T>(xhr: XMLHttpRequest): Response<T> {
@@ -71,7 +114,6 @@ export interface PromiseResolver<T> {
 export class Client {
   public static Timeout: number = 0;
   public static ResponseType: XMLHttpRequestResponseType = "json";
-  public static Async: boolean = true;
 
   public static DefaultHeaders = {
     Accept: ContentType.Json,
@@ -84,7 +126,6 @@ export class Client {
     Client.DefaultHeaders
   );
   private data: RequestBody;
-  private query: string;
   private responseType: XMLHttpRequestResponseType = Client.ResponseType;
   private timeout: number = Client.Timeout;
   private queryAdded: boolean = false;
@@ -148,11 +189,13 @@ export class Client {
     let r = new_response<T>(this.xhr);
     if (this.xhr.status < 200 || this.xhr.status >= 400) {
       resolve(
-        Err(<ClientErrorBasic<T>>{
-          type: ResErrCode.HttpStatusErr,
-          response: Some(r),
-          event,
-        })
+        Err(
+          err_with_matcher({
+            type: RequestErrType.HttpStatusErr,
+            response: r,
+            event,
+          })
+        )
       );
     }
 
@@ -162,7 +205,7 @@ export class Client {
   private execute<T>(
     resolve: PromiseResolver<Result<Response<T>, ClientError<T>>>
   ) {
-    this.xhr.open(this.method, this.url, Client.Async);
+    this.xhr.open(this.method, this.url, true);
     this.xhr.responseType = this.responseType;
     this.xhr.timeout = this.timeout;
     this.applyHeaders();
@@ -172,27 +215,30 @@ export class Client {
     );
     this.xhr.ontimeout = event =>
       resolve(
-        Err(<ClientErrorProgress<T>>{
-          type: ResErrCode.Timeout,
-          response: None(),
-          event,
-        })
+        Err(
+          err_with_matcher({
+            type: RequestErrType.Timeout,
+            event,
+          })
+        )
       );
     this.xhr.onabort = event =>
       resolve(
-        Err(<ClientErrorBasic<T>>{
-          type: ResErrCode.Abort,
-          response: None(),
-          event,
-        })
+        Err(
+          err_with_matcher({
+            type: RequestErrType.Abort,
+            event,
+          })
+        )
       );
     this.xhr.onerror = event =>
       resolve(
-        Err(<ClientErrorError<T>>{
-          type: ResErrCode.XhrErr,
-          response: None(),
-          event,
-        })
+        Err(
+          err_with_matcher({
+            type: RequestErrType.XhrErr,
+            event,
+          })
+        )
       );
     this.xhr.upload;
     this.xhr.send(this.data);

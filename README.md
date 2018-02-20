@@ -36,7 +36,7 @@ consuming its APIs. Many of the hacks to support older browsers have been
 dropped in favor of an >=ES5 compatible codebase
 
 * _Note: a compatibility check is performed when the lib is loaded, and an Error
-  will be logged/thrown if required browser APIs are not present (thrown if
+  will be logged if required browser APIs are not present (thrown if
   `window.onerror` is defined, logged otherwise)._
 
 Much of the code is adapted from the
@@ -47,16 +47,12 @@ axios in the future, the similarities will make refactoring relatively easy.
 
 ## Usage
 
-`browser-http-client` has zero dependencies and is built for two target
-environments:
-
-1. Browser: available on the window as a global (`window.Http` or simply `Http`)
-1. ESM Packaged Module: named export `Client`
+`browser-http-client` has a dependency on `safe-types` and is built for ESM
+only.
 
 \*_Note: TypeScript users can dig into the package to access an enum/map of Http
 status codes as registered with IANA. This is not part of the default build as
-it requires your build tooling to compile from source (webpack:
-'awesome-typescript-loader' + the 'include' directive inside loader rule)._
+it requires your build tooling to compile from source._
 
 ```js
 import { Status } from "browser-http-client/src/xhr/status.ts";
@@ -85,13 +81,22 @@ document.head.appendChild(
 ```js
 import { Client } from "browser-http-client";
 
-Client.get("https://api.github.com/users/alexsasharegan/repos")
-  .then(res => {
-    console.log("Response headers:", res.headers);
-    console.log(`Response status: ${res.statusText} [${res.status}]`);
-    console.log("Response data:", res.data);
-  })
-  .catch(console.error);
+Client.get("https://api.github.com/users/alexsasharegan/repos").then(result =>
+  result
+    .map(res => {
+      console.log("Response headers:", res.headers);
+      console.log(`Response status: ${res.statusText} [${res.status}]`);
+      console.log("Response data:", res.data);
+    })
+    .map_err(err =>
+      err.match({
+        HttpStatusErr: console.error,
+        XhrErr: console.error,
+        Timeout: console.error,
+        Abort: console.error,
+      })
+    )
+);
 
 // url: string, data?: object, options?: object
 Client.post("/api/got/characters", {

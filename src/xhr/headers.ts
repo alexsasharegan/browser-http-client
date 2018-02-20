@@ -43,7 +43,7 @@ export function parse(
   target: { [key: string]: string | string[] }
 ): { [field: string]: string | string[] } {
   if (!headers) {
-    return;
+    return target;
   }
 
   let line: string;
@@ -88,6 +88,8 @@ export function parse(
 
     target[key] = val;
   }
+
+  return target;
 }
 
 export interface HttpHeaders {

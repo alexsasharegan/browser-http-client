@@ -2,7 +2,7 @@ export type Primitive = string | number | boolean | null;
 export type PrimitiveArray = string[] | number[] | boolean[] | null[];
 export type QueryObject = { [index: string]: Primitive | PrimitiveArray };
 
-export function encode_query(data: QueryObject) {
+export function encode_query(data: QueryObject): string {
   let encoded = [];
   let enc = encodeURIComponent;
   let val: any;
