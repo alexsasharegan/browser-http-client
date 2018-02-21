@@ -9,47 +9,41 @@
     "clean": "node build/clean",
     "prebuild": "npm run clean",
     "build": "npm run build:prod",
-    "build:prod": "cross-env NODE_ENV=production rollup -c build/rollup.config.js",
+    "build:prod":
+      "cross-env NODE_ENV=production rollup -c build/rollup.config.js",
     "size": "cat lib/http.esm.js | wc -c",
     "size:gzip": "gzip -c lib/http.esm.js | wc -c",
     "prerelease": "npm run test:cov",
+    "prerelease:beta": "npm run test:cov",
     "release": "npm run release:version && npm run release:publish",
+    "release:beta": "npm run release:version:beta && npm run release:publish",
     "release:version": "standard-version",
+    "release:version:beta": "standard-version --prerelease beta",
     "release:publish": "git push --follow-tags origin master; npm publish",
     "prepublishOnly": "npm run build",
-    "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "coveralls":
+      "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "test:v": "jest --verbose",
     "test:cov": "jest --verbose --coverage",
     "test": "npm run test:cov"
   },
   "jest": {
-    "moduleFileExtensions": [
-      "ts",
-      "js"
-    ],
+    "moduleFileExtensions": ["ts", "js"],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
-    "collectCoverageFrom": [
-      "src/**/*.{js,ts}"
-    ],
+    "collectCoverageFrom": ["src/**/*.{js,ts}"],
     "browser": true
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alexsasharegan/browser-http-client.git"
   },
-  "files": [
-    "lib"
-  ],
-  "keywords": [
-    "http",
-    "xhr",
-    "ajax",
-    "client"
-  ],
-  "author": "Alex Regan <alex.joseph.regan@gmail.com> (https://github.com/alexsasharegan)",
+  "files": ["lib"],
+  "keywords": ["http", "xhr", "ajax", "client"],
+  "author":
+    "Alex Regan <alex.joseph.regan@gmail.com> (https://github.com/alexsasharegan)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/alexsasharegan/browser-http-client/issues"
