@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="3.0.0-beta.0"></a>
+# [3.0.0-beta.0](https://github.com/alexsasharegan/browser-http-client/compare/v2.0.0...v3.0.0-beta.0) (2018-02-21)
+
+
+### Features
+
+* **3.0.0:** enrich API with Result wrapper type ([df64d7f](https://github.com/alexsasharegan/browser-http-client/commit/df64d7f))
+
+
+### BREAKING CHANGES
+
+* **3.0.0:** all return types are now wrapped in Result types
+* **3.0.0:** promises do not reject, they use Err types
+
+* feat(client): pattern match err type
+
+* chore: clean up old deps
+
+* feat(client): adds event listener proxying
+* **3.0.0:** renames Client.make => Client.create
+* **3.0.0:** renames Client.do => Client.request
+
+* Client class now holds the generic type
+* adds `addEventListener` proxy to XMLHttpRequest
+* adds `addUploadEventListener` proxy to XMLHttpRequestUpload
+* adds xhr to all ClientError types
+
+* chore: testing bootstrap
+
+* feat(qstr): adds 100% cov
+
+* fix(client): fix abort err
+* **3.0.0:** rename Client.request => Client.send
+
+* feat(client): adds testing and concats `charset` to content type
+
+* chore(docs): add a v3 explanation
+
+
+
 <a name="2.0.0"></a>
 # [2.0.0](https://github.com/alexsasharegan/browser-http-client/compare/v1.3.2...v2.0.0) (2018-02-17)
 
