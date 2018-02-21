@@ -1,5 +1,5 @@
 export type Primitive = string | number | boolean | null;
-export type PrimitiveArray = string[] | number[] | boolean[] | null[];
+export type PrimitiveArray = Array<Primitive>;
 export type QueryObject = { [index: string]: Primitive | PrimitiveArray };
 
 export function encode_query(data: QueryObject): string {
