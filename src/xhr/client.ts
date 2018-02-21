@@ -191,7 +191,7 @@ export class Client<T> {
       return;
     }
     this.data = JSON.stringify(data);
-    this.addHeaders({ "Content-Type": ContentType.Json });
+    this.addHeaders({ "Content-Type": ContentType.Json + ";charset=utf-8" });
   }
 
   private applyHeaders(): void {

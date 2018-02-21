@@ -6,7 +6,7 @@ const mock = {
   url: suffix => base + suffix,
   wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
 };
-Client.Timeout = 1500;
+Client.Timeout = 2000;
 
 interface Geo {
   lat: string;
@@ -44,11 +44,49 @@ describe("Client", async () => {
   });
 
   it("should make a GET request", async () => {
-    let result = await Client.get<User[]>(mock.url("/users"));
+    let result = await Client.get<User>(mock.url("/users/1"));
     expect(result.unwrap().data).toMatchSnapshot();
-    expect(result.unwrap().data[0].id).toBeDefined();
-    expect(typeof result.unwrap().data[0].id == "number").toBe(true);
-    expect(typeof result.unwrap().data[0].name == "string").toBe(true);
+    expect(result.unwrap().data.id).toBeDefined();
+    expect(typeof result.unwrap().data.id == "number").toBe(true);
+    expect(typeof result.unwrap().data.name == "string").toBe(true);
+  });
+
+  it("should make POST request", async () => {
+    let data = {
+      title: "foo",
+      body: "bar",
+      userId: 1,
+    };
+    let result = await Client.post(mock.url("/posts"), data);
+    expect(result.is_ok()).toBe(true);
+    expect(result.unwrap().data).toMatchSnapshot();
+  });
+
+  it("should make PUT request", async () => {
+    let data = {
+      id: 1,
+      title: "foo",
+      body: "baz",
+      userId: 1,
+    };
+    let result = await Client.put(mock.url("/posts/1"), data);
+    expect(result.is_ok()).toBe(true);
+    expect(result.unwrap().data).toMatchSnapshot();
+  });
+
+  it("should make PATCH request", async () => {
+    let data = {
+      title: "bar",
+    };
+    let result = await Client.patch(mock.url("/posts/1"), data);
+    expect(result.is_ok()).toBe(true);
+    expect(result.unwrap().data).toMatchSnapshot();
+  });
+
+  it("should make DELETE request", async () => {
+    let result = await Client.delete(mock.url("/posts/1"));
+    expect(result.is_ok()).toBe(true);
+    expect(result.unwrap().data).toMatchSnapshot();
   });
 
   it("should abort with cancel token", async () => {
