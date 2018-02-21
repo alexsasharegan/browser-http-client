@@ -22,6 +22,13 @@ export interface Response<T = any> {
   xhr: XMLHttpRequest;
 }
 
+export enum RequestErrType {
+  HttpStatusErr = "HttpStatusErr",
+  XhrErr = "XhrErr",
+  Timeout = "Timeout",
+  Abort = "Abort",
+}
+
 export type Matchable<T> = { match: ClientErrMatcher<T> };
 
 export type ClientErrorStatus<T> = {
@@ -62,7 +69,10 @@ export type ClientError<T> =
   | Matchable<T> & ClientErrorError;
 
 export type ErrMatchObj<T, U> = {
-  [type in RequestErrType]: (err: ClientErrorBase<T>) => U
+  [RequestErrType.HttpStatusErr]: (err: ClientErrorStatus<T>) => U;
+  [RequestErrType.XhrErr]: (err: ClientErrorError) => U;
+  [RequestErrType.Timeout]: (err: ClientErrorProgress) => U;
+  [RequestErrType.Abort]: (err: ClientErrorAbort) => U;
 };
 
 export interface ClientErrMatcher<T> {
@@ -90,13 +100,6 @@ function err_with_matcher<T>(err: ClientErrorBase<T>): ClientError<T> {
       }
     },
   });
-}
-
-export enum RequestErrType {
-  HttpStatusErr = "HttpStatusErr",
-  XhrErr = "XhrErr",
-  Timeout = "Timeout",
-  Abort = "Abort",
 }
 
 function new_response<T>(xhr: XMLHttpRequest): Response<T> {
