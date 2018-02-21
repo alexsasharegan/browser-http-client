@@ -116,6 +116,9 @@ export interface PromiseResolver<T> {
 }
 
 export class Client<T> {
+  /**
+   * Timeout value in milliseconds.
+   */
   public static Timeout: number = 0;
   public static ResponseType: XMLHttpRequestResponseType = "json";
 
@@ -134,6 +137,7 @@ export class Client<T> {
   private timeout: number = Client.Timeout;
   private query_added: boolean = false;
   private req_sent: boolean = false;
+  private has_aborted: boolean = false;
   private promise: Promise<Result<Response<T>, ClientError<T>>>;
   private xhr_evt_listeners: Array<{
     type: keyof XMLHttpRequestEventMap;
@@ -205,7 +209,10 @@ export class Client<T> {
    * If the xhr is underway, this will generate an error with type: `Abort`.
    */
   public getCancelToken(): () => void {
-    return () => this.xhr.abort();
+    return () => {
+      this.has_aborted = true;
+      this.xhr.abort();
+    };
   }
 
   /**
@@ -250,7 +257,7 @@ export class Client<T> {
     resolve: PromiseResolver<Result<Response<T>, ClientError<T>>>,
     event: Event
   ) {
-    if (this.xhr.readyState !== XMLHttpRequest.DONE) {
+    if (this.xhr.readyState !== XMLHttpRequest.DONE || this.has_aborted) {
       return;
     }
 
@@ -324,7 +331,7 @@ export class Client<T> {
     this.xhr.send(this.data);
   }
 
-  public request(): Promise<Result<Response<T>, ClientError<T>>> {
+  public send(): Promise<Result<Response<T>, ClientError<T>>> {
     if (this.req_sent) {
       return this.promise;
     }
@@ -363,7 +370,7 @@ export class Client<T> {
     url: string,
     query?: QStr.QueryObject
   ): Promise<Result<Response<T>, ClientError<T>>> {
-    return Client.create<T>("GET", url, { query }).request();
+    return Client.create<T>("GET", url, { query }).send();
   }
 
   public static post<T = any>(
@@ -372,7 +379,7 @@ export class Client<T> {
     options: RequestOptions = {}
   ): Promise<Result<Response<T>, ClientError<T>>> {
     options.data = data;
-    return Client.create<T>("POST", url, options).request();
+    return Client.create<T>("POST", url, options).send();
   }
 
   public static put<T = any>(
@@ -381,7 +388,7 @@ export class Client<T> {
     options: RequestOptions = {}
   ): Promise<Result<Response<T>, ClientError<T>>> {
     options.data = data;
-    return Client.create<T>("PUT", url, options).request();
+    return Client.create<T>("PUT", url, options).send();
   }
 
   public static patch<T = any>(
@@ -390,14 +397,14 @@ export class Client<T> {
     options: RequestOptions = {}
   ): Promise<Result<Response<T>, ClientError<T>>> {
     options.data = data;
-    return Client.create<T>("PATCH", url, options).request();
+    return Client.create<T>("PATCH", url, options).send();
   }
 
   public static delete<T = any>(
     url: string,
     query?: QStr.QueryObject
   ): Promise<Result<Response<T>, ClientError<T>>> {
-    return Client.create<T>("DELETE", url, { query }).request();
+    return Client.create<T>("DELETE", url, { query }).send();
   }
 
   public static setResponseType(type: XMLHttpRequestResponseType): void {
