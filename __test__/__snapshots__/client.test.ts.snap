@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Client should make DELETE request 1`] = `Object {}`;
+
+exports[`Client should make PATCH request 1`] = `
+Object {
+  "body": "quia et suscipit
+suscipit recusandae consequuntur expedita et cum
+reprehenderit molestiae ut ut quas totam
+nostrum rerum est autem sunt rem eveniet architecto",
+  "id": 1,
+  "title": "bar",
+  "userId": 1,
+}
+`;
+
+exports[`Client should make POST request 1`] = `
+Object {
+  "body": "bar",
+  "id": 101,
+  "title": "foo",
+  "userId": 1,
+}
+`;
+
+exports[`Client should make PUT request 1`] = `
+Object {
+  "body": "baz",
+  "id": 1,
+  "title": "foo",
+  "userId": 1,
+}
+`;
+
+exports[`Client should make a GET request 1`] = `
+Object {
+  "address": Object {
+    "city": "Gwenborough",
+    "geo": Object {
+      "lat": "-37.3159",
+      "lng": "81.1496",
+    },
+    "street": "Kulas Light",
+    "suite": "Apt. 556",
+    "zipcode": "92998-3874",
+  },
+  "company": Object {
+    "bs": "harness real-time e-markets",
+    "catchPhrase": "Multi-layered client-server neural-net",
+    "name": "Romaguera-Crona",
+  },
+  "email": "Sincere@april.biz",
+  "id": 1,
+  "name": "Leanne Graham",
+  "phone": "1-770-736-8031 x56442",
+  "username": "Bret",
+  "website": "hildegard.org",
+}
+`;

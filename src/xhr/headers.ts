@@ -38,44 +38,49 @@ const ignoreDupeMap: Dictionary<boolean> = {
  *  'transfer-encoding': 'chunked' }
  * ```
  */
-export function Parse(
+export function parse(
   headers: string,
-  target: { [key: string]: string | string[] | undefined }
-): void {
+  target: { [key: string]: string | string[] }
+): { [field: string]: string | string[] } {
   if (!headers) {
-    return;
+    return target;
   }
 
-  let key: string,
-    val: string,
-    i: number,
-    leadSp = /^\s*/,
-    trailSp = /\s*$/;
+  let line: string;
+  let key: string;
+  let val: string;
+  let i: number;
+  let lead_sp = /^\s*/;
+  let trail_sp = /\s*$/;
 
-  for (const line of headers.split("\n")) {
+  for (line of headers.split("\n")) {
     i = line.indexOf(":");
     key = line
       .substr(0, i)
-      .replace(leadSp, "")
-      .replace(trailSp, "")
+      .replace(lead_sp, "")
+      .replace(trail_sp, "")
       .toLowerCase();
     val = line
       .substr(i + 1)
-      .replace(leadSp, "")
-      .replace(trailSp, "");
+      .replace(lead_sp, "")
+      .replace(trail_sp, "");
 
     // Skip empty keys and defined items in the ignore list.
     if (key == "" || (target[key] !== undefined && ignoreDupeMap[key])) {
       continue;
     }
+
     if (key === "set-cookie") {
+      // Normalize to array
       if (!Array.isArray(target[key])) {
         target[key] = [];
       }
+      // TS needs a var alloc to infer type, so force the type
       (target[key] as string[]).push(val);
       continue;
     }
 
+    // These keys can have multiple values
     if (target[key] !== undefined) {
       target[key] += ", " + val;
       continue;
@@ -83,48 +88,50 @@ export function Parse(
 
     target[key] = val;
   }
+
+  return target;
 }
 
 export interface HttpHeaders {
   Accept?: string;
-  "Access-Control-Allow-Origin"?: string;
-  "Access-Control-Allow-Credentials"?: string;
-  "Access-Control-Expose-Headers"?: string;
-  "Access-Control-Max-Age"?: string;
-  "Access-Control-Allow-Methods"?: string;
-  "Access-Control-Allow-Headers"?: string;
-  "Accept-Patch"?: string;
-  "Accept-Ranges"?: string;
+  ["Access-Control-Allow-Origin"]?: string;
+  ["Access-Control-Allow-Credentials"]?: string;
+  ["Access-Control-Expose-Headers"]?: string;
+  ["Access-Control-Max-Age"]?: string;
+  ["Access-Control-Allow-Methods"]?: string;
+  ["Access-Control-Allow-Headers"]?: string;
+  ["Accept-Patch"]?: string;
+  ["Accept-Ranges"]?: string;
   Age?: string;
   Allow?: string;
-  "Alt-Svc"?: string;
-  "Cache-Control"?: string;
+  ["Alt-Svc"]?: string;
+  ["Cache-Control"]?: string;
   connection?: string;
-  "Content-Disposition"?: string;
-  "Content-Encoding"?: string;
-  "Content-Language"?: string;
-  "Content-Length"?: string;
-  "Content-Location"?: string;
-  "Content-Range"?: string;
-  "Content-Type"?: string;
+  ["Content-Disposition"]?: string;
+  ["Content-Encoding"]?: string;
+  ["Content-Language"]?: string;
+  ["Content-Length"]?: string;
+  ["Content-Location"]?: string;
+  ["Content-Range"]?: string;
+  ["Content-Type"]?: string;
   Date?: string;
   Expires?: string;
   Host?: string;
-  "Last-Modified"?: string;
+  ["Last-Modified"]?: string;
   Location?: string;
   Pragma?: string;
-  "Proxy-Authenticate"?: string;
-  "Public-Key-Pins"?: string;
-  "Retry-After"?: string;
-  "Set-Cookie"?: string;
-  "Strict-Transport-Security"?: string;
+  ["Proxy-Authenticate"]?: string;
+  ["Public-Key-Pins"]?: string;
+  ["Retry-After"]?: string;
+  ["Set-Cookie"]?: string;
+  ["Strict-Transport-Security"]?: string;
   Trailer?: string;
-  "Transfer-Encoding"?: string;
+  ["Transfer-Encoding"]?: string;
   Tk?: string;
   Upgrade?: string;
   Vary?: string;
   Via?: string;
   Warning?: string;
-  "Www-Authenticate"?: string;
+  ["Www-Authenticate"]?: string;
   [header: string]: string | undefined;
 }

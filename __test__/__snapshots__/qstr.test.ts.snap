@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`encoding/qstr should not include undefined values 1`] = `""`;
+
+exports[`encoding/qstr should not include undefined values in an array 1`] = `""`;
+
+exports[`encoding/qstr should work with primitive array types 1`] = `"string[]=a%20string&string[]=another%20string&number[]=100&number[]=101&bool[]=false&bool[]=true&empty[]=null&empty[]=null&mixed[]=string&mixed[]=true&mixed[]=null&mixed[]=100"`;
+
+exports[`encoding/qstr should work with primitive types 1`] = `"string=a%20string&number=100&bool=false&empty=null"`;

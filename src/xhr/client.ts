@@ -1,11 +1,12 @@
-import * as headers from "./headers";
-import * as url from "../encoding/url";
+import { Ok, Err, Result, expect_never } from "safe-types";
+import * as Headers from "./headers";
+import * as QStr from "../encoding/qstr";
 import { ContentType } from "./contentType";
 
 export interface RequestOptions {
-  query?: url.QueryObject;
+  query?: QStr.QueryObject;
   data?: RequestData;
-  headers?: headers.HttpHeaders;
+  headers?: Headers.HttpHeaders;
   responseType?: XMLHttpRequestResponseType;
   timeout?: number;
 }
@@ -13,46 +14,113 @@ export interface RequestOptions {
 export type RequestData = { [key: string]: any } | FormData | Document;
 export type RequestBody = string | FormData | Document;
 
-export interface Response {
-  data: any;
+export interface Response<T = any> {
+  data: T;
   status: number;
   statusText: string;
-  headers: object;
+  headers: { [field: string]: string | string[] };
   xhr: XMLHttpRequest;
 }
 
-function newResponse(xhr: XMLHttpRequest): Response {
-  let r = Object.create(null);
+export type Matchable<T> = { match: ClientErrMatcher<T> };
+
+export type ClientErrorStatus<T> = {
+  xhr: XMLHttpRequest;
+  readonly type: RequestErrType.HttpStatusErr;
+  response: Response<T>;
+  event: Event;
+};
+
+export type ClientErrorAbort = {
+  xhr: XMLHttpRequest;
+  readonly type: RequestErrType.Abort;
+  event: Event;
+};
+
+export type ClientErrorProgress = {
+  xhr: XMLHttpRequest;
+  readonly type: RequestErrType.Timeout;
+  event: ProgressEvent;
+};
+
+export type ClientErrorError = {
+  xhr: XMLHttpRequest;
+  readonly type: RequestErrType.XhrErr;
+  event: ErrorEvent;
+};
+
+export type ClientErrorBase<T> =
+  | ClientErrorStatus<T>
+  | ClientErrorAbort
+  | ClientErrorProgress
+  | ClientErrorError;
+
+export type ClientError<T> =
+  | Matchable<T> & ClientErrorStatus<T>
+  | Matchable<T> & ClientErrorAbort
+  | Matchable<T> & ClientErrorProgress
+  | Matchable<T> & ClientErrorError;
+
+export type ErrMatchObj<T, U> = {
+  [type in RequestErrType]: (err: ClientErrorBase<T>) => U
+};
+
+export interface ClientErrMatcher<T> {
+  <U>(matcher: ErrMatchObj<T, U>): U;
+}
+
+function err_with_matcher<T>(err: ClientErrorBase<T>): ClientError<T> {
+  return Object.assign(err, {
+    match<U>(matcher: ErrMatchObj<T, U>): U {
+      switch (err.type) {
+        case RequestErrType.Abort:
+          return matcher[RequestErrType.Abort](err);
+
+        case RequestErrType.HttpStatusErr:
+          return matcher[RequestErrType.HttpStatusErr](err);
+
+        case RequestErrType.Timeout:
+          return matcher[RequestErrType.Timeout](err);
+
+        case RequestErrType.XhrErr:
+          return matcher[RequestErrType.XhrErr](err);
+
+        default:
+          return expect_never(err, "invalid error type");
+      }
+    },
+  });
+}
+
+export enum RequestErrType {
+  HttpStatusErr = "HttpStatusErr",
+  XhrErr = "XhrErr",
+  Timeout = "Timeout",
+  Abort = "Abort",
+}
+
+function new_response<T>(xhr: XMLHttpRequest): Response<T> {
+  let r: Response<T> = Object.create(null);
 
   r.xhr = xhr;
-
-  if (xhr.responseType == "text") {
-    r.data = xhr.responseText;
-  } else {
-    r.data = xhr.response;
-  }
-
+  r.data = xhr.response;
   r.status = xhr.status;
   r.statusText = xhr.statusText;
-  r.headers = Object.create(null);
-  headers.Parse(xhr.getAllResponseHeaders(), r.headers);
+  r.headers = Headers.parse(xhr.getAllResponseHeaders(), Object.create(null));
 
   return r;
 }
 
-export interface PromiseResolve<T> {
-  (value?: any): any;
-  (value?: T): T;
+export interface PromiseResolver<T> {
+  (value: T): T;
 }
 
-export interface PromiseReject {
-  (reason?: any): any;
-}
-
-export class Client {
+export class Client<T> {
+  /**
+   * Timeout value in milliseconds.
+   */
   public static Timeout: number = 0;
   public static ResponseType: XMLHttpRequestResponseType = "json";
-  public static Async: boolean = true;
 
   public static DefaultHeaders = {
     Accept: ContentType.Json,
@@ -60,103 +128,228 @@ export class Client {
   };
 
   private xhr: XMLHttpRequest = new XMLHttpRequest();
-  private headers: headers.HttpHeaders = Object.assign(
+  private headers: Headers.HttpHeaders = Object.assign(
     Object.create(null),
     Client.DefaultHeaders
   );
-  private data: RequestBody = null;
-  private query: string;
+  private data: RequestBody;
   private responseType: XMLHttpRequestResponseType = Client.ResponseType;
   private timeout: number = Client.Timeout;
-  private queryAdded: boolean = false;
+  private query_added: boolean = false;
+  private req_sent: boolean = false;
+  private has_aborted: boolean = false;
+  private promise: Promise<Result<Response<T>, ClientError<T>>>;
+  private xhr_evt_listeners: Array<{
+    type: keyof XMLHttpRequestEventMap;
+    listener: (
+      this: XMLHttpRequest,
+      ev: XMLHttpRequestEventMap[keyof XMLHttpRequestEventMap]
+    ) => any;
+    options?: boolean | AddEventListenerOptions;
+  }> = [];
+  private upload_evt_listeners: Array<{
+    type: keyof XMLHttpRequestEventTargetEventMap;
+    listener: (
+      this: XMLHttpRequestUpload,
+      ev: XMLHttpRequestEventTargetEventMap[keyof XMLHttpRequestEventTargetEventMap]
+    ) => any;
+    options?: boolean | AddEventListenerOptions;
+  }> = [];
 
   constructor(private method: string, private url: string) {}
 
   /**
-   * Adds an object of headers via `Object.assign` that will be written to the XHR.
+   * Adds an object of headers via `Object.assign`
+   * that will be written to the XHR.
    */
-  addHeaders(headers: headers.HttpHeaders): void {
+  public addHeaders(headers: Headers.HttpHeaders): void {
     Object.assign(this.headers, headers);
   }
   /**
    * Sets a new object of headers that will be written to the XHR.
    */
-  setHeaders(headers: headers.HttpHeaders): void {
+  public setHeaders(headers: Headers.HttpHeaders): void {
     this.headers = Object.assign(Object.create(null), headers);
   }
-  addQueryString(query: string): void {
-    if (this.queryAdded) {
+
+  public addQueryStr(query: string): void {
+    if (this.query_added) {
       throw new Error("Cannot add query string twice.");
     }
     this.url += "?";
     this.url += query;
-    this.queryAdded = true;
+    this.query_added = true;
   }
-  addQueryObject(query: url.QueryObject): void {
-    this.addQueryString(url.EncodeQuery(query));
+
+  public addQueryObj(query: QStr.QueryObject): void {
+    this.addQueryStr(QStr.encode_query(query));
   }
 
   private setData(data: RequestData): void {
-    if (!data) {
-      return;
-    }
     if (data instanceof FormData || data instanceof Document) {
       this.data = data;
       return;
     }
     this.data = JSON.stringify(data);
-    this.addHeaders({ "Content-Type": ContentType.Json });
+    this.addHeaders({ "Content-Type": ContentType.Json + ";charset=utf-8" });
   }
+
   private applyHeaders(): void {
-    for (const header in this.headers) {
+    let header: string;
+    for (header in this.headers) {
       if (!this.headers[header]) {
         continue;
       }
       this.xhr.setRequestHeader(header, this.headers[header]);
     }
   }
+
+  /**
+   * Returns a function that will cancel the underlying xhr.
+   * If the xhr is underway, this will generate an error with type: `Abort`.
+   */
+  public getCancelToken(): () => void {
+    return () => {
+      this.has_aborted = true;
+      this.xhr.abort();
+    };
+  }
+
+  /**
+   * Register event handlers on the xhr.
+   * There's largely no reason to need this since
+   * the xhr events are watched internally.
+   */
+  public addEventListener<K extends keyof XMLHttpRequestEventMap>(
+    type: K,
+    listener: (this: XMLHttpRequest, ev: XMLHttpRequestEventMap[K]) => any,
+    options?: boolean | AddEventListenerOptions
+  ): void {
+    this.xhr_evt_listeners.push({
+      type,
+      listener,
+      options,
+    });
+  }
+
+  /**
+   * Register event handlers on the xhr upload.
+   * Useful for progress events on a file upload.
+   */
+  public addUploadEventListener<
+    K extends keyof XMLHttpRequestEventTargetEventMap
+  >(
+    type: K,
+    listener: (
+      this: XMLHttpRequestUpload,
+      ev: XMLHttpRequestEventTargetEventMap[K]
+    ) => any,
+    options?: boolean | AddEventListenerOptions
+  ): void {
+    this.upload_evt_listeners.push({
+      type,
+      listener,
+      options,
+    });
+  }
+
   private handleReadyStateChange(
-    resolve: PromiseResolve<Response>,
-    reject: PromiseReject
+    resolve: PromiseResolver<Result<Response<T>, ClientError<T>>>,
+    event: Event
   ) {
-    if (this.xhr.readyState !== XMLHttpRequest.DONE) {
+    if (this.xhr.readyState !== XMLHttpRequest.DONE || this.has_aborted) {
       return;
     }
 
-    let r = newResponse(this.xhr);
+    let r = new_response<T>(this.xhr);
     if (this.xhr.status < 200 || this.xhr.status >= 400) {
-      reject(r);
+      resolve(
+        Err(
+          err_with_matcher({
+            xhr: this.xhr,
+            type: RequestErrType.HttpStatusErr,
+            response: r,
+            event,
+          })
+        )
+      );
     }
 
-    resolve(r);
+    resolve(Ok(r));
   }
-  private execute(resolve: PromiseResolve<Response>, reject: PromiseReject) {
-    this.xhr.open(this.method, this.url, Client.Async);
+
+  private execute(
+    resolve: PromiseResolver<Result<Response<T>, ClientError<T>>>
+  ): void {
+    this.xhr.open(this.method, this.url, true);
     this.xhr.responseType = this.responseType;
     this.xhr.timeout = this.timeout;
     this.applyHeaders();
     this.xhr.onreadystatechange = this.handleReadyStateChange.bind(
       this,
-      resolve,
-      reject
+      resolve
     );
-    this.xhr.ontimeout = reject;
-    this.xhr.onerror = reject;
+    this.xhr.addEventListener("timeout", event =>
+      resolve(
+        Err(
+          err_with_matcher({
+            xhr: this.xhr,
+            type: RequestErrType.Timeout,
+            event,
+          })
+        )
+      )
+    );
+    this.xhr.addEventListener("abort", event =>
+      resolve(
+        Err(
+          err_with_matcher({
+            xhr: this.xhr,
+            type: RequestErrType.Abort,
+            event,
+          })
+        )
+      )
+    );
+    this.xhr.addEventListener("error", event =>
+      resolve(
+        Err(
+          err_with_matcher({
+            xhr: this.xhr,
+            type: RequestErrType.XhrErr,
+            event,
+          })
+        )
+      )
+    );
+    for (let l of this.xhr_evt_listeners) {
+      this.xhr.addEventListener(l.type, l.listener, l.options);
+    }
+    for (let l of this.upload_evt_listeners) {
+      this.xhr.upload.addEventListener(l.type, l.listener, l.options);
+    }
     this.xhr.send(this.data);
   }
 
-  do(): Promise<Response> {
-    return new Promise<Response>(this.execute.bind(this));
+  public send(): Promise<Result<Response<T>, ClientError<T>>> {
+    if (this.req_sent) {
+      return this.promise;
+    }
+    this.promise = new Promise<Result<Response<T>, ClientError<T>>>(
+      this.execute.bind(this)
+    );
+    this.req_sent = true;
+    return this.promise;
   }
 
-  static make(
+  public static create<T = any>(
     method: string,
     url: string,
     options: RequestOptions = {}
-  ): Client {
-    const client = new Client(method, url);
+  ): Client<T> {
+    const client = new Client<T>(method, url);
     if (options.query) {
-      client.addQueryObject(options.query);
+      client.addQueryObj(options.query);
     }
     if (options.data) {
       client.setData(options.data);
@@ -173,38 +366,45 @@ export class Client {
     return client;
   }
 
-  public static get(url: string, query?: url.QueryObject): Promise<Response> {
-    return Client.make("GET", url, { query }).do();
+  public static get<T = any>(
+    url: string,
+    query?: QStr.QueryObject
+  ): Promise<Result<Response<T>, ClientError<T>>> {
+    return Client.create<T>("GET", url, { query }).send();
   }
-  public static post(
+
+  public static post<T = any>(
     url: string,
     data: RequestData,
     options: RequestOptions = {}
-  ): Promise<Response> {
+  ): Promise<Result<Response<T>, ClientError<T>>> {
     options.data = data;
-    return Client.make("POST", url, options).do();
+    return Client.create<T>("POST", url, options).send();
   }
-  public static put(
+
+  public static put<T = any>(
     url: string,
     data: RequestData,
     options: RequestOptions = {}
-  ): Promise<Response> {
+  ): Promise<Result<Response<T>, ClientError<T>>> {
     options.data = data;
-    return Client.make("PUT", url, options).do();
+    return Client.create<T>("PUT", url, options).send();
   }
-  public static patch(
+
+  public static patch<T = any>(
     url: string,
     data: RequestData,
     options: RequestOptions = {}
-  ): Promise<Response> {
+  ): Promise<Result<Response<T>, ClientError<T>>> {
     options.data = data;
-    return Client.make("PATCH", url, options).do();
+    return Client.create<T>("PATCH", url, options).send();
   }
-  public static delete(
+
+  public static delete<T = any>(
     url: string,
-    query?: url.QueryObject
-  ): Promise<Response> {
-    return Client.make("DELETE", url, { query }).do();
+    query?: QStr.QueryObject
+  ): Promise<Result<Response<T>, ClientError<T>>> {
+    return Client.create<T>("DELETE", url, { query }).send();
   }
 
   public static setResponseType(type: XMLHttpRequestResponseType): void {
