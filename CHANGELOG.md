@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="3.0.0-beta.1"></a>
+# [3.0.0-beta.1](https://github.com/alexsasharegan/browser-http-client/compare/v3.0.0-beta.0...v3.0.0-beta.1) (2018-02-21)
+
+
+### Bug Fixes
+
+* **client:** fixes err match to call match fn with proper type ([17ce8f4](https://github.com/alexsasharegan/browser-http-client/commit/17ce8f4))
+
+
+
 <a name="3.0.0-beta.0"></a>
 # [3.0.0-beta.0](https://github.com/alexsasharegan/browser-http-client/compare/v2.0.0...v3.0.0-beta.0) (2018-02-21)
 
