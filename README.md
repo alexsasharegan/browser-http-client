@@ -6,11 +6,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/alexsasharegan/browser-http-client.svg?style=for-the-badge)](https://github.com/alexsasharegan/browser-http-client/stargazers)
 [![GitHub license](https://img.shields.io/github/license/alexsasharegan/browser-http-client.svg?style=for-the-badge)](https://github.com/alexsasharegan/browser-http-client/blob/master/LICENSE.md)
 
-A lightweight, browser-specific, strongly typed XHR client.
-
-**Size:** `4.5KB (gzipped: 1.8KB)`\*
-
-_\*excludes external dependency on `safe-types`_
+A lightweight, browser-specific, strongly typed XHR client. Meant for usage with
+TypeScript.
 
 ```sh
 # npm 5 and up saves deps by default
@@ -19,6 +16,23 @@ npm i browser-http-client
 # alternately with yarn
 yarn add browser-http-client
 ```
+
+## v3.x
+
+Version 3 adds an opinionated twist to doing ajax. All requests now return a
+wrapper type known as a Result. A Result type holds either an `Ok<T>` or an
+`Err<E>` (where `T` and `E` are generic type variables that hold the type of
+whatever you're wrapping). Thanks to the
+[safe-types](https://github.com/alexsasharegan/safe-types) lib, the Result comes
+with many methods that allow perform operations of the Ok and Err values with
+safety because it matches the case under the hood and provides type-safe control
+flow.
+
+This change to using result types can simplify the successful path for our
+programs, as well as provide consistency for the error states our program can
+exist in. Given that an XHR can error in a number of ways, the pseudo pattern
+match available on the ClientError type makes declaratively handling all those
+possibilities much easier.
 
 ## Purpose
 
