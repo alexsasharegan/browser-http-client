@@ -6,9 +6,11 @@
 [![GitHub stars](https://img.shields.io/github/stars/alexsasharegan/browser-http-client.svg?style=for-the-badge)](https://github.com/alexsasharegan/browser-http-client/stargazers)
 [![GitHub license](https://img.shields.io/github/license/alexsasharegan/browser-http-client.svg?style=for-the-badge)](https://github.com/alexsasharegan/browser-http-client/blob/master/LICENSE.md)
 
-A browser-specific, lightweight XHR client.
+A lightweight, browser-specific, strongly typed XHR client.
 
-**Size:** ESM `4.5KB (gzipped: 1.8KB)`
+**Size:** `4.5KB (gzipped: 1.8KB)`\*
+
+_\*excludes external dependency on `safe-types`_
 
 ```sh
 # npm 5 and up saves deps by default
@@ -58,40 +60,28 @@ it requires your build tooling to compile from source._
 import { Status } from "browser-http-client/src/xhr/status.ts";
 ```
 
-### Browser Example
-
-```js
-// This is copy/paste-able into your console.
-// After the request logs, play around with the `Http` class.
-document.head.appendChild(
-  Object.assign(document.createElement("script"), {
-    src: "https://unpkg.com/browser-http-client",
-    onload() {
-      Http.Client.get("https://api.github.com/users/alexsasharegan/repos").then(
-        console.log,
-        console.error
-      );
-    },
-  })
-);
-```
-
-### ESM Example
+### Example
 
 ```js
 import { Client } from "browser-http-client";
 
 Client.get("https://api.github.com/users/alexsasharegan/repos").then(result =>
   result
-    .map(res => {
-      console.log("Response headers:", res.headers);
-      console.log(`Response status: ${res.statusText} [${res.status}]`);
-      console.log("Response data:", res.data);
+    // Map over the Ok case of the result (called with the wrapped response)
+    .map(({ headers, status, statusText, data }) => {
+      console.log("Response headers:", headers);
+      console.log(`Response status: ${statusText} [${status}]`);
+      console.log("Response data:", data);
     })
+    // Map over the Err case of the result. The error value has a discriminant
+    // prop called `type` that allows for explicit error shape inference.
+    // For example, XhrErr will contain the response, Abort will not, and Timeout
+    // specifically receives the ProgressEvent type instead of the generic Event.
+    // The error type is also imbued with a pseudo pattern matching method
     .map_err(err =>
       err.match({
-        HttpStatusErr: console.error,
-        XhrErr: console.error,
+        HttpStatusErr: statusErr => console.error(statusErr.response.data),
+        XhrErr: err => console.error(err.event),
         Timeout: console.error,
         Abort: console.error,
       })

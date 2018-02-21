@@ -1,7 +1,7 @@
 {
   "name": "browser-http-client",
   "version": "2.0.0",
-  "description": "Browser-specific, lightweight XHR client.",
+  "description": "Lightweight, browser-specific, strongly typed XHR client.",
   "main": "lib/http.esm.js",
   "module": "lib/http.esm.js",
   "types": "lib/index.d.ts",
@@ -12,11 +12,31 @@
     "build:prod": "cross-env NODE_ENV=production rollup -c build/rollup.config.js",
     "size": "cat lib/http.esm.min.js | wc -c",
     "size:gzip": "gzip -c lib/http.esm.min.js | wc -c",
+    "prerelease": "npm run test:cov",
     "release": "npm run release:version && npm run release:publish",
     "release:version": "standard-version",
     "release:publish": "git push --follow-tags origin master; npm publish",
     "prepublishOnly": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "test:v": "jest --verbose",
+    "test:cov": "jest --verbose --coverage",
+    "test": "npm run test:cov"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "\\.ts$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testMatch": [
+      "**/__tests__/?(*.)(spec|test).(ts|js)"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.{js,ts}"
+    ],
+    "mapCoverage": true
   },
   "repository": {
     "type": "git",
@@ -38,12 +58,16 @@
   },
   "homepage": "https://github.com/alexsasharegan/browser-http-client#readme",
   "devDependencies": {
+    "@types/jest": "^22.1.3",
+    "coveralls": "^3.0.0",
     "cross-env": "^5.1.3",
+    "jest": "^22.4.0",
     "rimraf": "^2.6.2",
     "rollup": "^0.56.2",
     "rollup-plugin-typescript2": "^0.11.1",
     "rollup-plugin-uglify": "^3.0.0",
     "standard-version": "^4.3.0",
+    "ts-jest": "^22.0.4",
     "typescript": "^2.7.2",
     "webpack-merge": "^4.1.1"
   },
