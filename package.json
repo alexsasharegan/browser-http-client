@@ -28,15 +28,13 @@
       "js"
     ],
     "transform": {
-      "\\.ts$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+      "^.+\\.tsx?$": "ts-jest"
     },
-    "testMatch": [
-      "**/__tests__/?(*.)(spec|test).(ts|js)"
-    ],
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "collectCoverageFrom": [
       "src/**/*.{js,ts}"
     ],
-    "mapCoverage": true
+    "browser": true
   },
   "repository": {
     "type": "git",
