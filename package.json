@@ -1,6 +1,6 @@
 {
   "name": "browser-http-client",
-  "version": "3.0.0-beta.1",
+  "version": "3.0.0",
   "description": "Lightweight, browser-specific, strongly typed XHR client.",
   "main": "lib/http.esm.js",
   "module": "lib/http.esm.js",

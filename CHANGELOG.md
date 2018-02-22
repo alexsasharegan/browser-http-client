@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="3.0.0"></a>
+# [3.0.0](https://github.com/alexsasharegan/browser-http-client/compare/v3.0.0-beta.1...v3.0.0) (2018-02-22)
+
+
+### Features
+
+* **client:** adds new generic for bad request response type ([2e63388](https://github.com/alexsasharegan/browser-http-client/commit/2e63388))
+
+
+
 <a name="3.0.0-beta.1"></a>
 # [3.0.0-beta.1](https://github.com/alexsasharegan/browser-http-client/compare/v3.0.0-beta.0...v3.0.0-beta.1) (2018-02-21)
 
