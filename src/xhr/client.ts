@@ -29,12 +29,12 @@ export enum RequestErrType {
   Abort = "Abort",
 }
 
-export type Matchable<T> = { match: ClientErrMatcher<T> };
+export type Matchable<E> = { match: ClientErrMatcher<E> };
 
-export type ClientErrorStatus<T> = {
+export type ClientErrorStatus<E> = {
   xhr: XMLHttpRequest;
   readonly type: RequestErrType.HttpStatusErr;
-  response: Response<T>;
+  response: Response<E>;
   event: Event;
 };
 
@@ -56,32 +56,32 @@ export type ClientErrorError = {
   event: ErrorEvent;
 };
 
-export type ClientErrorBase<T> =
-  | ClientErrorStatus<T>
+export type ClientErrorBase<E> =
+  | ClientErrorStatus<E>
   | ClientErrorAbort
   | ClientErrorProgress
   | ClientErrorError;
 
-export type ClientError<T> =
-  | Matchable<T> & ClientErrorStatus<T>
-  | Matchable<T> & ClientErrorAbort
-  | Matchable<T> & ClientErrorProgress
-  | Matchable<T> & ClientErrorError;
+export type ClientError<E> =
+  | Matchable<E> & ClientErrorStatus<E>
+  | Matchable<E> & ClientErrorAbort
+  | Matchable<E> & ClientErrorProgress
+  | Matchable<E> & ClientErrorError;
 
-export type ErrMatchObj<T, U> = {
-  [RequestErrType.HttpStatusErr]: (err: ClientErrorStatus<T>) => U;
+export type ErrMatchObj<E, U> = {
+  [RequestErrType.HttpStatusErr]: (err: ClientErrorStatus<E>) => U;
   [RequestErrType.XhrErr]: (err: ClientErrorError) => U;
   [RequestErrType.Timeout]: (err: ClientErrorProgress) => U;
   [RequestErrType.Abort]: (err: ClientErrorAbort) => U;
 };
 
-export interface ClientErrMatcher<T> {
-  <U>(matcher: ErrMatchObj<T, U>): U;
+export interface ClientErrMatcher<E> {
+  <U>(matcher: ErrMatchObj<E, U>): U;
 }
 
-function err_with_matcher<T>(err: ClientErrorBase<T>): ClientError<T> {
+function err_with_matcher<E>(err: ClientErrorBase<E>): ClientError<E> {
   return Object.assign(err, {
-    match<U>(matcher: ErrMatchObj<T, U>): U {
+    match<U>(matcher: ErrMatchObj<E, U>): U {
       switch (err.type) {
         case RequestErrType.Abort:
           return matcher[RequestErrType.Abort](err);
@@ -118,7 +118,7 @@ export interface PromiseResolver<T> {
   (value: T): T;
 }
 
-export class Client<T> {
+export class Client<T, E> {
   /**
    * Timeout value in milliseconds.
    */
@@ -141,7 +141,7 @@ export class Client<T> {
   private query_added: boolean = false;
   private req_sent: boolean = false;
   private has_aborted: boolean = false;
-  private promise: Promise<Result<Response<T>, ClientError<T>>>;
+  private promise: Promise<Result<Response<T>, ClientError<E>>>;
   private xhr_evt_listeners: Array<{
     type: keyof XMLHttpRequestEventMap;
     listener: (
@@ -257,32 +257,31 @@ export class Client<T> {
   }
 
   private handleReadyStateChange(
-    resolve: PromiseResolver<Result<Response<T>, ClientError<T>>>,
+    resolve: PromiseResolver<Result<Response<T>, ClientError<E>>>,
     event: Event
   ) {
     if (this.xhr.readyState !== XMLHttpRequest.DONE || this.has_aborted) {
       return;
     }
 
-    let r = new_response<T>(this.xhr);
     if (this.xhr.status < 200 || this.xhr.status >= 400) {
       resolve(
         Err(
           err_with_matcher({
             xhr: this.xhr,
             type: RequestErrType.HttpStatusErr,
-            response: r,
+            response: new_response<E>(this.xhr),
             event,
           })
         )
       );
     }
 
-    resolve(Ok(r));
+    resolve(Ok(new_response<T>(this.xhr)));
   }
 
   private execute(
-    resolve: PromiseResolver<Result<Response<T>, ClientError<T>>>
+    resolve: PromiseResolver<Result<Response<T>, ClientError<E>>>
   ): void {
     this.xhr.open(this.method, this.url, true);
     this.xhr.responseType = this.responseType;
@@ -334,23 +333,30 @@ export class Client<T> {
     this.xhr.send(this.data);
   }
 
-  public send(): Promise<Result<Response<T>, ClientError<T>>> {
+  public send(): Promise<Result<Response<T>, ClientError<E>>> {
     if (this.req_sent) {
       return this.promise;
     }
-    this.promise = new Promise<Result<Response<T>, ClientError<T>>>(
+    this.promise = new Promise<Result<Response<T>, ClientError<E>>>(
       this.execute.bind(this)
     );
     this.req_sent = true;
     return this.promise;
   }
 
-  public static create<T = any>(
+  /**
+   * Construct a client manually for a request with a response shaped T,
+   * or in the case of a bad request, shaped E.
+   *
+   * `Client.create` is useful when you need a cancellation token
+   * or need to listen to special XHR events (like upload progress).
+   */
+  public static create<T = any, E = any>(
     method: string,
     url: string,
     options: RequestOptions = {}
-  ): Client<T> {
-    const client = new Client<T>(method, url);
+  ): Client<T, E> {
+    const client = new Client<T, E>(method, url);
     if (options.query) {
       client.addQueryObj(options.query);
     }
@@ -369,45 +375,65 @@ export class Client<T> {
     return client;
   }
 
-  public static get<T = any>(
+  /**
+   * Make a GET request with a response shaped T,
+   * or in the case of a bad request, shaped E.
+   */
+  public static get<T = any, E = any>(
     url: string,
     query?: QStr.QueryObject
-  ): Promise<Result<Response<T>, ClientError<T>>> {
-    return Client.create<T>("GET", url, { query }).send();
+  ): Promise<Result<Response<T>, ClientError<E>>> {
+    return Client.create<T, E>("GET", url, { query }).send();
   }
 
-  public static post<T = any>(
+  /**
+   * Make a POST request with a response shaped T,
+   * or in the case of a bad request, shaped E.
+   */
+  public static post<T = any, E = any>(
     url: string,
     data: RequestData,
     options: RequestOptions = {}
-  ): Promise<Result<Response<T>, ClientError<T>>> {
+  ): Promise<Result<Response<T>, ClientError<E>>> {
     options.data = data;
-    return Client.create<T>("POST", url, options).send();
+    return Client.create<T, E>("POST", url, options).send();
   }
 
-  public static put<T = any>(
+  /**
+   * Make a PUT request with a response shaped T,
+   * or in the case of a bad request, shaped E.
+   */
+  public static put<T = any, E = any>(
     url: string,
     data: RequestData,
     options: RequestOptions = {}
-  ): Promise<Result<Response<T>, ClientError<T>>> {
+  ): Promise<Result<Response<T>, ClientError<E>>> {
     options.data = data;
-    return Client.create<T>("PUT", url, options).send();
+    return Client.create<T, E>("PUT", url, options).send();
   }
 
-  public static patch<T = any>(
+  /**
+   * Make a PATCH request with a response shaped T,
+   * or in the case of a bad request, shaped E.
+   */
+  public static patch<T = any, E = any>(
     url: string,
     data: RequestData,
     options: RequestOptions = {}
-  ): Promise<Result<Response<T>, ClientError<T>>> {
+  ): Promise<Result<Response<T>, ClientError<E>>> {
     options.data = data;
-    return Client.create<T>("PATCH", url, options).send();
+    return Client.create<T, E>("PATCH", url, options).send();
   }
 
-  public static delete<T = any>(
+  /**
+   * Make a DELETE request with a response shaped T,
+   * or in the case of a bad request, shaped E.
+   */
+  public static delete<T = any, E = any>(
     url: string,
     query?: QStr.QueryObject
-  ): Promise<Result<Response<T>, ClientError<T>>> {
-    return Client.create<T>("DELETE", url, { query }).send();
+  ): Promise<Result<Response<T>, ClientError<E>>> {
+    return Client.create<T, E>("DELETE", url, { query }).send();
   }
 
   public static setResponseType(type: XMLHttpRequestResponseType): void {
