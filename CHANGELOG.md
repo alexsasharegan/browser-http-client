@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="3.1.0"></a>
+# [3.1.0](https://github.com/alexsasharegan/browser-http-client/compare/v3.0.0...v3.1.0) (2018-02-23)
+
+
+### Features
+
+* **client:** adds comments for intellisense ([9b074b2](https://github.com/alexsasharegan/browser-http-client/commit/9b074b2))
+
+
+
 <a name="3.0.0"></a>
 # [3.0.0](https://github.com/alexsasharegan/browser-http-client/compare/v3.0.0-beta.1...v3.0.0) (2018-02-22)
 
