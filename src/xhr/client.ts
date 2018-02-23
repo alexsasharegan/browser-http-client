@@ -102,6 +102,9 @@ function err_with_matcher<E>(err: ClientErrorBase<E>): ClientError<E> {
   });
 }
 
+/**
+ * Parse an XHR into a Response object with a payload `T`.
+ */
 function new_response<T>(xhr: XMLHttpRequest): Response<T> {
   let r: Response<T> = Object.create(null);
 
@@ -118,11 +121,20 @@ export interface PromiseResolver<T> {
   (value: T): T;
 }
 
+/**
+ * Client is a class the wraps an individual XMLHttpRequest object.
+ * A successful request takes the shape `T`, and an unsuccessful
+ * request that returns a response (`HttpStatusErr`) with the
+ * shape `E`.
+ */
 export class Client<T, E> {
   /**
    * Timeout value in milliseconds.
    */
   public static Timeout: number = 0;
+  /**
+   * The XHR response parsing strategy.
+   */
   public static ResponseType: XMLHttpRequestResponseType = "json";
 
   public static DefaultHeaders = {
@@ -175,6 +187,11 @@ export class Client<T, E> {
     this.headers = Object.assign(Object.create(null), headers);
   }
 
+  /**
+   * addQueryStr adds an already encoded query string to the url.
+   *
+   * _NOTE: prepends the query string with '?' char._
+   */
   public addQueryStr(query: string): void {
     if (this.query_added) {
       throw new Error("Cannot add query string twice.");
@@ -184,6 +201,9 @@ export class Client<T, E> {
     this.query_added = true;
   }
 
+  /**
+   * addQueryObj builds a query string from the object and adds it to the url.
+   */
   public addQueryObj(query: QStr.QueryObject): void {
     this.addQueryStr(QStr.encode_query(query));
   }
@@ -333,6 +353,10 @@ export class Client<T, E> {
     this.xhr.send(this.data);
   }
 
+  /**
+   * send fires off the XHR and returns a promise with the Result.
+   * Multiple calls will result in the same return value (wrapped in Promise).
+   */
   public send(): Promise<Result<Response<T>, ClientError<E>>> {
     if (this.req_sent) {
       return this.promise;
@@ -436,6 +460,10 @@ export class Client<T, E> {
     return Client.create<T, E>("DELETE", url, { query }).send();
   }
 
+  /**
+   * Sets the type of the response to enable correct parsing of the
+   * XHR response.
+   */
   public static setResponseType(type: XMLHttpRequestResponseType): void {
     Client.ResponseType = type;
   }
