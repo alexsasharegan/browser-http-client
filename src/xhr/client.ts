@@ -122,9 +122,9 @@ export interface PromiseResolver<T> {
 }
 
 /**
- * Client is a class the wraps an individual XMLHttpRequest object.
+ * Client is a class that wraps an individual XMLHttpRequest object.
  * A successful request takes the shape `T`, and an unsuccessful
- * request that returns a response (`HttpStatusErr`) with the
+ * request that returns a response (`HttpStatusErr`) takes the
  * shape `E`.
  */
 export class Client<T, E> {
