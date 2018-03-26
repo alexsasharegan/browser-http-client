@@ -80,26 +80,23 @@ import { Status } from "browser-http-client/src/xhr/status.ts";
 import { Client } from "browser-http-client";
 
 Client.get("https://api.github.com/users/alexsasharegan/repos").then(result =>
-  result
-    // Map over the Ok case of the result (called with the wrapped response)
-    .map(({ headers, status, statusText, data }) => {
+  result.match({
+    Ok: ({ headers, status, statusText, data }) => {
       console.log("Response headers:", headers);
       console.log(`Response status: ${statusText} [${status}]`);
       console.log("Response data:", data);
-    })
-    // Map over the Err case of the result. The error value has a discriminant
-    // prop called `type` that allows for explicit error shape inference.
+    },
+    // The error value has a discriminant prop called `type` that allows for explicit error shape inference.
     // For example, XhrErr will contain the response, Abort will not, and Timeout
     // specifically receives the ProgressEvent type instead of the generic Event.
     // The error type is also imbued with a pseudo pattern matching method
-    .map_err(err =>
-      err.match({
-        HttpStatusErr: statusErr => console.error(statusErr.response.data),
-        XhrErr: err => console.error(err.event),
-        Timeout: console.error,
-        Abort: console.error,
-      })
-    )
+    Err: err => err.match({
+      HttpStatusErr: statusErr => console.error(statusErr.response.data),
+      XhrErr: err => console.error(err.event),
+      Timeout: console.error,
+      Abort: console.error,
+    })
+  })
 );
 
 // url: string, data?: object, options?: object
