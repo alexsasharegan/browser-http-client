@@ -7,7 +7,7 @@ const pascal_name = "Http";
 
 export default {
   input: path.resolve(__dirname, "../src/index.ts"),
-  plugins: [typescript()],
+  plugins: [typescript({ abortOnError: false })],
   external: ["safe-types"],
   output: [
     {
