@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="3.2.0"></a>
+# [3.2.0](https://github.com/alexsasharegan/browser-http-client/compare/v3.1.1...v3.2.0) (2018-08-05)
+
+
+### Features
+
+* response headers are parsed lazily ([0507a43](https://github.com/alexsasharegan/browser-http-client/commit/0507a43))
+
+
+
 <a name="3.1.1"></a>
 ## [3.1.1](https://github.com/alexsasharegan/browser-http-client/compare/v3.1.0...v3.1.1) (2018-02-23)
 
