@@ -49,6 +49,9 @@ describe("Client", async () => {
     expect(result.unwrap().data.id).toBeDefined();
     expect(typeof result.unwrap().data.id == "number").toBe(true);
     expect(typeof result.unwrap().data.name == "string").toBe(true);
+    expect(
+      Object.entries(result.unwrap().headers).map(([k, v]) => [k, typeof v])
+    ).toMatchSnapshot();
   });
 
   it("should make POST request", async () => {

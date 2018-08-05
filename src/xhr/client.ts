@@ -106,13 +106,19 @@ function err_with_matcher<E>(err: ClientErrorBase<E>): ClientError<E> {
  * Parse an XHR into a Response object with a payload `T`.
  */
 function new_response<T>(xhr: XMLHttpRequest): Response<T> {
-  let r: Response<T> = Object.create(null);
+  let r: Response<T> = {
+    xhr,
+    data: xhr.response,
+    status: xhr.status,
+    statusText: xhr.statusText,
+    get headers() {
+      Object.defineProperty(r, "headers", {
+        value: Headers.parse(xhr.getAllResponseHeaders(), {}),
+      });
 
-  r.xhr = xhr;
-  r.data = xhr.response;
-  r.status = xhr.status;
-  r.statusText = xhr.statusText;
-  r.headers = Headers.parse(xhr.getAllResponseHeaders(), Object.create(null));
+      return r.headers;
+    },
+  };
 
   return r;
 }

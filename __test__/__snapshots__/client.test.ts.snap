@@ -57,3 +57,24 @@ Object {
   "website": "hildegard.org",
 }
 `;
+
+exports[`Client should make a GET request 2`] = `
+Array [
+  Array [
+    "content-type",
+    "string",
+  ],
+  Array [
+    "cache-control",
+    "string",
+  ],
+  Array [
+    "pragma",
+    "string",
+  ],
+  Array [
+    "expires",
+    "string",
+  ],
+]
+`;

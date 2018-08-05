@@ -40,10 +40,10 @@ const ignoreDupeMap: Dictionary<boolean> = {
  */
 export function parse(
   headers: string,
-  target: { [key: string]: string | string[] }
+  target_mut: { [key: string]: string | string[] }
 ): { [field: string]: string | string[] } {
   if (!headers) {
-    return target;
+    return target_mut;
   }
 
   let line: string;
@@ -66,30 +66,30 @@ export function parse(
       .replace(trail_sp, "");
 
     // Skip empty keys and defined items in the ignore list.
-    if (key == "" || (target[key] !== undefined && ignoreDupeMap[key])) {
+    if (key == "" || (target_mut[key] !== undefined && ignoreDupeMap[key])) {
       continue;
     }
 
     if (key === "set-cookie") {
       // Normalize to array
-      if (!Array.isArray(target[key])) {
-        target[key] = [];
+      if (!Array.isArray(target_mut[key])) {
+        target_mut[key] = [];
       }
       // TS needs a var alloc to infer type, so force the type
-      (target[key] as string[]).push(val);
+      (target_mut[key] as string[]).push(val);
       continue;
     }
 
     // These keys can have multiple values
-    if (target[key] !== undefined) {
-      target[key] += ", " + val;
+    if (target_mut[key] !== undefined) {
+      target_mut[key] += ", " + val;
       continue;
     }
 
-    target[key] = val;
+    target_mut[key] = val;
   }
 
-  return target;
+  return target_mut;
 }
 
 export interface HttpHeaders {
